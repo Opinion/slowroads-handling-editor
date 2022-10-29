@@ -17695,6 +17695,7 @@
         if (null === e.current || null === t.current) return;
         if (new ResizeObserver((t=>{
           i.current && e.current && i.current.setSize(e.current.offsetWidth, e.current.offsetHeight)
+          window.exposedI = window.exposedI ?? i //:::MODIFIED
         })).observe(e.current), !i.current && g) {
           if (A) return;
           i.current = new Zl(t.current, e.current, c, l),
