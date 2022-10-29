@@ -12,7 +12,7 @@ A mod for slowroads.io, provides a handling editor allowing you to customize veh
 ## Todo
 
 ### Possible issues with relying on 'beforescriptexecute'
-Just to make it clear, this is written before event attempting to make the *userscript*.
+Just to make it clear, this is written before even attempting to make the *userscript*.
 I have played around with modified handling values on slowroads.io but I have found no way of accessing those values without triggering a breakpoint in the *game script*. In order to get access to those values I plan to replace the *original game script* with a *modified game script*. The *modified game script* will save the game object to a globally accessible variable which makes it possible to modify the game through code.
 
 Meanwhile for those interested; I introduced my breakpoint on a 'resize observer'. This allows you to consistently introduce a breakpoint by resizing the screen and by chance also gives you access to game variables like `i.current.vehicleController.vehicleDef.metrics` (vehicle handling).
