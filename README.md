@@ -42,7 +42,7 @@ but they mention it has limited support in Firefox (which I think is a little we
 Things I need to figure out:
 1. Does 'beforescriptexecute' work in the latest firefox version without a polyfill?
 2. Does the polyfill work on the latest chrome version?
-3. Does the polyfill override firefox's 'beforescriptexecute' and break the original implementation?
+3. Does it actually polyfill or does it override firefox's 'beforescriptexecute' and break the original implementation?
 
 If all of the above are true I might need two *userscripts*, one for firefox and one for edge and chrome.
 While testing this I will make the *modified game script* available in this repo.
