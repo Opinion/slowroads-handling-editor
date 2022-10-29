@@ -23,7 +23,7 @@ Now back to beforescriptexecute...
 
 See https://developer.mozilla.org/en-US/docs/Web/API/Element/beforescriptexecute_event
 
-Forefox mentions:
+Firefox mentions:
 > It is a proprietary event specific to Gecko (Firefox).
 
 There are polyfills like https://github.com/jspenguin2017/Snippets/blob/master/onbeforescriptexecute.html
