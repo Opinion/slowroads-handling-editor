@@ -1,21 +1,48 @@
 
 ![Opinion's Handling Editor for slowroads.io](header.png)
-Opinion's Handling Editor is a mod for slowroads.io which gives you access to a simple handling editor. Get more out of your vehicle by customizing it's on the fly.
-
-## Installation
-
-### 1. Requirements
- - Firefox (tested on v106.0.2 64 bit): https://www.mozilla.org/en-US/firefox/new/
- - Tampermonkey addon for Firefox: https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/
-
-### 2. Installation instructions
-TODO (Meanwhile, copy 'userscript.js' into a new userscript in Tampermonkey, reload slowroads and have fun!)
+Opinion's Handling Editor is a mod for slowroads.io which gives you access to a simple handling editor. Get more out of your vehicle by customizing it on the fly.
 
 ## How it works
  - You install a *userscript* in Tampermonkey (Greasemonkey, Violentmonkey or similar extensions not tested).
  - The *userscript* will block the original *game script* and replace it with a slightly modified version.
    - The modified *game script* exposes some variables related to the game's state. This allows us to modify these settings on the fly.
- - The *userscript* also adds an in-game menu for the handling editor.
+   - The *userscript* also adds an in-game menu for the handling editor.
+
+## Installation Requirements
+ - Firefox (tested on v106.0.2 64 bit)
+ - Tampermonkey extension for Firefox
+ - Userscript for Opinion's Handling Editor (see instructions)
+
+## Installation instructions
+### 1. Installing Firefox
+Go to https://www.mozilla.org/en-US/firefox/new/.  
+Download and install the latest version of Firefox.
+
+### 2. Installing Tampermonkey
+Open Firefox and install the Tampermonkey extension from https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/.
+
+### 3. Installing userscript
+With Tampermonkey installed, click the extension button (top right) and select **"Create new script..."**.
+A new window will pop up. This is the userscript editor. For now, select **all** existing text and remove it.
+
+In a new tab, go to [repo/version/1.0.1/userscript.tampermonkey.js](version/1.0.1/userscript.tampermonkey.js) and copy the userscript.
+
+Go back to Tampermoney's userscript editor and paste the copied userscript.
+
+Press `CTRL+S` in the userscript editor to save or select `File > Save` from the context menu. You will see a popup on the top of the screen saying "Operation completed successfully".
+
+You can now close the tab for the userscript editor.
+
+### 4. Enjoy
+Go to https://slowroads.io and enjoy the handling editor.
+
+> **Be careful! Some values can cause the game to crash.
+> In some cases after a crash, the game needs to be loaded in a new tab to avoid extreme lagging (reloading the page is not enough sometimes).**
+
+> Values are changed by listening to the 'change' event.  
+> For best results, click anywhere inside the game after editing a value in the handling editor.
+
+> Placed the handling editor outside the viewport of your browser? Reload the game page to get the window back.
 
 ## Preview
 ![Preview of Opinion's Handling Editor](preview.png)
