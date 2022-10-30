@@ -1,5 +1,5 @@
 
-![Opinion's Handling Editor for slowroads.io](./header.png)
+![Opinion's Handling Editor for slowroads.io](header.png)
 Opinion's Handling Editor is a mod for slowroads.io which gives you access to a simple handling editor. Get more out of your vehicle by customizing it's on the fly.
 
 ## Installation
@@ -16,6 +16,9 @@ TODO (Meanwhile, copy 'userscript.js' into a new userscript in Tampermonkey, rel
  - The *userscript* will block the original *game script* and replace it with a slightly modified version.
    - The modified *game script* exposes some variables related to the game's state. This allows us to modify these settings on the fly.
  - The *userscript* also adds an in-game menu for the handling editor.
+
+## Preview
+![Preview of Opinion's Handling Editor](preview.png)
 
 ## Upcoming changes
  - Make this mod a browser extension instead of a userscript
