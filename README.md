@@ -18,6 +18,9 @@ Opinion's Handling Editor is a mod for slowroads.io which gives you access to a 
 Go to https://www.mozilla.org/en-US/firefox/new/.  
 Download and install the latest version of Firefox.
 
+> Chromium based browsers not tested. We rely on a Javascript event 'beforescriptexecute' which is only supported by Firefox
+> See https://developer.mozilla.org/en-US/docs/Web/API/Element/beforescriptexecute_event
+
 ### 2. Installing Tampermonkey
 Open Firefox and install the Tampermonkey extension from https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/.
 
