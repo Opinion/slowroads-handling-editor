@@ -41,8 +41,10 @@ You can now close the tab for the userscript editor.
 ### 4. Enjoy
 Go to https://slowroads.io and enjoy the handling editor.
 
-> **Be careful! Some values can cause the game to crash.
-> In some cases after a crash, the game needs to be loaded in a new tab to avoid extreme lagging (reloading the page is not enough sometimes).**
+> **Be careful! Some values can cause the game to crash.**
+
+> **If the game starts lagging after a crash, you may need to open the game in a new tab. Reloading the page isn't enough sometimes.**  
+> In my case, I could identify when this was happening by listening for missing game sounds (i.e. motor, rolling tires, skids and crash).
 
 > Values are changed by listening to the 'change' event.  
 > For best results, click anywhere inside the game after editing a value in the handling editor.
