@@ -3,7 +3,7 @@
 ## Planned implementation
 Scrape JSON for all cameras for all vehicles. All default values are needed in the handling editor.
 
-## Camera change-, vehicle change- and seed/world change behavior
+### Camera change-, vehicle change- and seed/world change behavior
 Camera settings will be kept though camera mode change, vehicle change and even seed/world change.
 You only need to change the camera setting once and it will persist.
 
