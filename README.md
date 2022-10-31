@@ -54,17 +54,25 @@ Go to https://slowroads.io and enjoy the handling editor.
 
 ## Upcoming changes
  - Make this mod a browser extension instead of a userscript
-   - **Possible?** Very much so.
-   - **Firefox and Chromium browser support?** Ohh yes.
-   - **When?** Just hold on, I'm working on it.
+   - **Q:** Possible? | **A:** Very much so.
+   - **Q:** Firefox and Chromium browser support? | **A:** Ohh yes.
+   - **Q:** When? | **A:** Just hold on, I'm working on it.
  - Find more handling related parameters and make them configurable
-   - There are individual settings for each wheel and I want to make them configurable
+   - Change individual wheel settings from the handling editor
    - Change drive mode from the handling editor (awd, fwd, rwd) (want this before I make savable presets)
-   - Change vehicle from the handling editor (car, bus, bike) (want this before I make saveable presets)
+   - Change vehicle from the handling editor (car, bus, bike) (want this before I make savable presets)
  - Add savable presets
    - Option to change to a different preset while reversing (use selected preset by default)
    - Option to change to a different preset while holding handbrake (use selected preset by default)
    - If both reversing and using handbrake, choose which should overrule the other
-   - **Why?** I believe this can churn out some amazing drift handlings. I evision something like allowing the car to spin out the rear easier when holding down the handbrake.
+   - **Q:** When? | **A:** I believe this can churn out some amazing drift handlings. I evision something like allowing the car to spin out the rear easier when holding down the handbrake.
  - Add some default presets
    - Need to do some playtesting and try to make some good handlings.
+ - Add a selection of car "skins" (retexture)
+
+## Things I need to figure out
+ - Can road/dirt/grass be configured in any way?
+ - Take a look at the code and learn more about how the handling works in slowroads.io
+ - Other settings related to handling?
+ - Can we modify the time-of-day?
+ - Can we replace textures (not a huge fan of the default white car)?
