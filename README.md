@@ -65,7 +65,7 @@ Go to https://slowroads.io and enjoy the handling editor.
    - Option to change to a different preset while reversing (use selected preset by default)
    - Option to change to a different preset while holding handbrake (use selected preset by default)
    - If both reversing and using handbrake, choose which should overrule the other
-   - **Q:** Why? | **A:** I believe this can churn out some amazing drift handlings. I evision something like allowing the car to spin out the rear easier when holding down the handbrake.
+   - **Q:** Why? | **A:** I believe this can churn out some amazing drift handlings. Like allowing the car to spin out the rear easier when holding down the handbrake.
  - Add some default presets
    - Need to do some playtesting and try to make some good handlings.
  - Add a selection of car "skins" (retexture)
