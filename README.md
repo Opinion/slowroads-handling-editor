@@ -55,5 +55,16 @@ Go to https://slowroads.io and enjoy the handling editor.
 ## Upcoming changes
  - Make this mod a browser extension instead of a userscript
    - **Possible?** Very much so.
-   - **Chromium browser support?** Ohh yes.
+   - **Firefox and Chromium browser support?** Ohh yes.
    - **When?** Just hold on, I'm working on it.
+ - Find more handling related parameters and make them configurable
+   - There are individual settings for each wheel and I want to make them configurable
+   - Change drive mode from the handling editor (awd, fwd, rwd) (want this before I make savable presets)
+   - Change vehicle from the handling editor (car, bus, bike) (want this before I make saveable presets)
+ - Add savable presets
+   - Option to change to a different preset while reversing (use selected preset by default)
+   - Option to change to a different preset while holding handbrake (use selected preset by default)
+   - If both reversing and using handbrake, choose which should overrule the other
+   - **Why?** I believe this can churn out some amazing drift handlings. I evision something like allowing the car to spin out the rear easier when holding down the handbrake.
+ - Add some default presets
+   - Need to do some playtesting and try to make some good handlings.
