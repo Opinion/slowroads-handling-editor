@@ -202,6 +202,10 @@ window.opinion = window.opinion ?? {
             windowActiveClass = 'active'
         }
 
+        // Size of input steps (up/down arrows when focusing inputs)
+        const stepSize = 0.01
+        const stepSizeAttribute = `step="${stepSize}"`
+
         // Create Handling Editor UI
         const handlingEditorOuterElement = document.createElement('div')
         handlingEditorOuterElement.id = 'handling-editor-outer'
@@ -223,74 +227,74 @@ window.opinion = window.opinion ?? {
             <!-- Left side -->
             <div>
                 <label for="handling-accel">accel</label>
-                <input type="number" step="0.1" id="handling-accel">
+                <input type="number" ${stepSizeAttribute} id="handling-accel">
             </div>
             <div>
                 <label for="handling-brake">brake</label>
-                <input type="number" step="0.1" id="handling-brake">
+                <input type="number" ${stepSizeAttribute} id="handling-brake">
             </div>
             <div>
                 <label for="handling-aeroFactor">aeroFactor</label>
-                <input type="number" step="0.1" id="handling-aeroFactor">
+                <input type="number" ${stepSizeAttribute} id="handling-aeroFactor">
             </div>
             <div>
                 <label for="handling-drag">drag</label>
-                <input type="number" step="0.1" id="handling-drag">
+                <input type="number" ${stepSizeAttribute} id="handling-drag">
             </div>
             <div>
                 <label for="handling-rockFactor">rockFactor</label>
-                <input type="number" step="0.1" id="handling-rockFactor">
+                <input type="number" ${stepSizeAttribute} id="handling-rockFactor">
             </div>
             <div>
                 <label for="handling-slipBase">slipBase</label>
-                <input type="number" step="0.1" id="handling-slipBase">
+                <input type="number" ${stepSizeAttribute} id="handling-slipBase">
             </div>
             <div>
                 <label for="handling-maxSteer">maxSteer</label>
-                <input type="number" step="0.1" id="handling-maxSteer">
+                <input type="number" ${stepSizeAttribute} id="handling-maxSteer">
             </div>
             <div>
                 <label for="handling-steerAccel">steerAccel</label>
-                <input type="number" step="0.1" id="handling-steerAccel">
+                <input type="number" ${stepSizeAttribute} id="handling-steerAccel">
             </div>
             <div>
                 <label for="handling-mass">mass</label>
-                <input type="number" step="0.1" id="handling-mass">
+                <input type="number" ${stepSizeAttribute} id="handling-mass">
             </div>
         </div>
         <div class="right">
             <!-- Right side -->
             <div>
                 <label for="handling-topSpeed">topSpeed</label>
-                <input type="number" step="0.1" id="handling-topSpeed">
+                <input type="number" ${stepSizeAttribute} id="handling-topSpeed">
             </div>
             <div>
                 <label for="handling-reverse">reverse</label>
-                <input type="number" step="0.1" id="handling-reverse">
+                <input type="number" ${stepSizeAttribute} id="handling-reverse">
             </div>
             <div>
                 <label for="handling-dampening">dampening</label>
-                <input type="number" step="0.1" id="handling-dampening">
+                <input type="number" ${stepSizeAttribute} id="handling-dampening">
             </div>
             <div>
                 <label for="handling-jerk">jerk</label>
-                <input type="number" step="0.1" id="handling-jerk">
+                <input type="number" ${stepSizeAttribute} id="handling-jerk">
             </div>
             <div>
                 <label for="handling-rollResistance">rollResistance</label>
-                <input type="number" step="0.1" id="handling-rollResistance">
+                <input type="number" ${stepSizeAttribute} id="handling-rollResistance">
             </div>
             <div>
                 <label for="handling-slipMod">slipMod</label>
-                <input type="number" step="0.1" id="handling-slipMod">
+                <input type="number" ${stepSizeAttribute} id="handling-slipMod">
             </div>
             <div>
                 <label for="handling-steerSpeed">steerSpeed</label>
-                <input type="number" step="0.1" id="handling-steerSpeed">
+                <input type="number" ${stepSizeAttribute} id="handling-steerSpeed">
             </div>
             <div>
                 <label for="handling-steerInterval">steerInterval</label>
-                <input type="number" step="0.1" id="handling-steerInterval">
+                <input type="number" ${stepSizeAttribute} id="handling-steerInterval">
             </div>
             <div>
                 <label for="handling-reset">Messed up?</label>
