@@ -1,12 +1,17 @@
-# current.camController
+# current.camController.mode
 
 ## Planned implementation
 Scrape JSON for all cameras for all vehicles. All default values are needed in the handling editor.
 
-Apply values from preset for the following events:
- - @onGameStart
- - @onCameraChange
- - @onVehicleChange
+## Camera change-, vehicle change- and seed/world change behavior
+Camera settings will be kept though camera mode change, vehicle change and even seed/world change.
+You only need to change the camera setting once and it will persist.
+
+Originally I planned on overriding values on many different events but now I see two possibilities:
+ 1. Override values on '@onCameraChange'
+ 2. Find where all camera modes are stored and override them there (once)
+
+I bet the second option is a lot harder. I'll take a look and update here when I find a good solution.
 
 
 
