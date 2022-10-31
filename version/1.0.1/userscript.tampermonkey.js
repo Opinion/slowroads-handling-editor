@@ -89,10 +89,10 @@ window.opinion = window.opinion ?? {
             successMessage: 'Game has started!',
         },
         {
-            name: 'Exposed game variables',
+            name: 'Vehicle spawn',
             passes: () => typeof window.exposedI?.current?.vehicleController !== 'undefined',
-            failedMessage: 'Couldn\'t find exposed game variable. Modified game script might not have loaded. Is the current game version even supported?',
-            successMessage: 'Wow, it loaded somehow. How did you manage that?',
+            failedMessage: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
+            successMessage: 'Found \'vehicleController\'.',
         },
     ],
 
