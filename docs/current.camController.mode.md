@@ -113,7 +113,6 @@ These values are from the in-game Roadster.
 }
 ```
 
-
 ### Bonnet
 ```
 {
