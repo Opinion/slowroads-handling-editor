@@ -23,7 +23,7 @@ window.opinion = window.opinion ?? {
      * Custom logger
      */
     log(...args) {
-        console.log('[🔧]','[OPINION]', ...args)
+        console.log('[🔧]', '[OPINION]', ...args)
     },
 
     /**
@@ -301,8 +301,6 @@ window.opinion = window.opinion ?? {
 </div>
 <style>
 #handling-editor-outer {}
-
-
 #handling-editor-toggle {
     display: none;
     position: absolute;
@@ -324,8 +322,6 @@ window.opinion = window.opinion ?? {
 #handling-editor-toggle.active {
    display: block;
 }
-
-
 #handling-editor {
     position: absolute;
     left: ${windowX};
@@ -382,20 +378,16 @@ window.opinion = window.opinion ?? {
     color: #BBBECE;
     margin-left: 4px;
 }
-
 #handling-editor .control-grid > div > div > input[type=number]::-webkit-inner-spin-button,
 #handling-editor .control-grid > div > div > input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
-
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-
 input[type=number] {
     -moz-appearance:textfield;
 }
@@ -420,7 +412,7 @@ input[type=number] {
         this.dragElement(handlingEditorElement)
 
         // Event :: Toggle handling editor
-        handlingEditorToggleElement.addEventListener('click', function() {
+        handlingEditorToggleElement.addEventListener('click', function () {
             handlingEditorElement.classList.toggle('active')
             if (handlingEditorElement.classList.contains('active')) {
                 localStorage.setItem('x-handling-editor-active', true)
@@ -447,7 +439,7 @@ input[type=number] {
             this.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
             return;
         }
-        for (var i =0; i < this.handlingKeys.length; i++) {
+        for (var i = 0; i < this.handlingKeys.length; i++) {
             const handlingKey = this.handlingKeys[i]
 
             // Resetting handling for the current key
@@ -464,7 +456,7 @@ input[type=number] {
             this.settings.defaultHandling = {}
         }
 
-        for (var i =0; i < this.handlingKeys.length; i++) {
+        for (var i = 0; i < this.handlingKeys.length; i++) {
             const handlingKey = this.handlingKeys[i]
 
             // Getting corresponding input and setting initial value
@@ -545,7 +537,8 @@ input[type=number] {
     }
 };
 
-(function() { 'use strict';
+(function () {
+    'use strict';
     addEventListener('beforescriptexecute', (e) => {
         if (e.target.src === opinion.settings.originalGameScript) {
             opinion.log('Detected game script, we will try to prevent execution...', e)
