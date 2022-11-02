@@ -5,7 +5,7 @@ Opinion's Handling Editor is a mod for slowroads.io which gives you access to a 
 Supports slowroads.io on version 1.0.1.
 
 ## How it works
- - You install a *userscript* in Tampermonkey (Greasemonkey, Violentmonkey or similar extensions not tested).
+ - You install a *userscript* in Tampermonkey or Violentmonkey (Greasemonkey not supported yet) (other similar extensions not tested).
  - The *userscript* will block the original *game script* and replace it with a slightly modified version.
    - The modified *game script* exposes some variables related to the game's state. This allows us to modify these settings on the fly.
    - The *userscript* also adds an in-game menu for the handling editor.
@@ -25,6 +25,10 @@ Download and install the latest version of Firefox.
 
 ### 2. Installing Tampermonkey
 Open Firefox and install the Tampermonkey extension from https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/.
+
+Optionally you can choose one of these alternatives:
+ - Violentmonkey: https://addons.mozilla.org/en-US/firefox/addon/violentmonkey/.
+ - Greasemonkey not supported yet (see [issue #1](https://github.com/Opinion/slowroads-handling-editor/issues/1)).
 
 ### 3. Installing userscript
 With Tampermonkey installed, click the extension button (top right) and select **"Create new script..."**.
