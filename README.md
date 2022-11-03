@@ -10,11 +10,6 @@ Supports slowroads.io on version 1.0.1.
    - The modified *game script* exposes some variables related to the game's state. This allows us to modify these settings on the fly.
    - The *userscript* also adds an in-game menu for the handling editor.
 
-## Installation Requirements
- - Firefox (tested on v106.0.2 64 bit)
- - Tampermonkey extension for Firefox
- - Userscript for Opinion's Handling Editor (see instructions)
-
 ## Installation instructions
 ### 1. Installing Firefox
 Go to https://www.mozilla.org/en-US/firefox/new/.  
