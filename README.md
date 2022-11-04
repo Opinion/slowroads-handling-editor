@@ -30,7 +30,7 @@ Optionally you can choose one of these alternatives:
 With Tampermonkey installed, click the extension button (top right) and select **"Create new script..."**.
 A new window will pop up. This is the userscript editor. For now, select **all** existing text and remove it.
 
-In a new tab, go to [repo/version/1.0.1/userscript.tampermonkey.js](version/1.0.1/userscript.tampermonkey.js) and copy the userscript.
+In a new tab, go to [./version/1.0.1/userscript.js](version/1.0.1/userscript.js) and copy the userscript.
 
 Go back to Tampermoney's userscript editor and paste the copied userscript.
 
