@@ -10,9 +10,42 @@
 // @run-at       document-start
 // ==/UserScript==
 
-/* globals opinion, Toastify, exposedI */
+/* globals opinionsHandlingEditor, Toastify, exposedI */
 
-window.opinion = window.opinion ?? {
+/**
+ * Get window 'unsafeWindow' or 'window'
+ * 
+ * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
+ * Details: https://wiki.greasespot.net/UnsafeWindow
+ */
+ function getWindow() {
+    return typeof unsafeWindow === 'object'
+        ? unsafeWindow
+        : window
+}
+
+/**
+ * Get Toastify through the actual window
+ */
+function getToastify() {
+    return getWindow()?.Toastify
+}
+
+/**
+ * Get 'exposedI' through window
+ */
+function getExposedI() {
+    return getWindow()?.exposedI
+}
+
+/**
+ * Get 'opinionsHandlingEditor' through window
+ */
+function getHandlingEditor() {
+    return getWindow()?.opinionsHandlingEditor
+}
+
+getWindow().opinionsHandlingEditor = {
     settings: {
         supportedVersion: '1.0.1',
         originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
@@ -33,7 +66,7 @@ window.opinion = window.opinion ?? {
         const element = document.createElement('script')
         element.src = src
         document.head.append(element)
-        this.log('Appended script', src)
+        this.log('Appended script', { element: element, src: src })
     },
 
     /**
@@ -44,7 +77,20 @@ window.opinion = window.opinion ?? {
         element.href = src
         element.rel = 'stylesheet'
         document.head.append(element)
-        this.log('Appended style', src)
+        this.log('Appended style', { element: element, src: src })
+    },
+
+    /**
+     * Append a <script> element to <body> with raw code
+     * 
+     * Useful because we can de-elevate (is that a word?) code and let it run from the page.
+     * Code will NOT run with the elevated permissions of the userscript.
+     */
+    appendRawScript(code) {
+        const element = document.createElement('script')
+        element.innerHTML = code
+        document.body.append(element)
+        this.log('Appended raw script', { element: element, code: code })
     },
 
     /**
@@ -78,19 +124,19 @@ window.opinion = window.opinion ?? {
     waitConditions: [
         {
             name: 'Toastify.js',
-            passes: () => typeof Toastify === 'function',
+            passes: () => typeof getToastify() === 'function',
             checkMessage: 'Waiting for Toastify.js to finish loading...',
             successMessage: 'Toastify.js successfully loaded!',
         },
         {
             name: 'Game start',
-            passes: () => window.exposedI?.current?.firstFrame === true,
+            passes: () => getExposedI()?.current?.firstFrame === true,
             checkMessage: 'Waiting for the game to start (press \'begin\')...',
             successMessage: 'Game has started!',
         },
         {
             name: 'Vehicle spawn',
-            passes: () => typeof window.exposedI?.current?.vehicleController !== 'undefined',
+            passes: () => typeof getExposedI()?.current?.vehicleController !== 'undefined',
             failedMessage: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
             successMessage: 'Found \'vehicleController\'.',
         },
@@ -102,7 +148,7 @@ window.opinion = window.opinion ?? {
      * Note: Runs in a 'setInterval' timer.
      */
     waitUntilReady() {
-        const self = opinion
+        const self = getHandlingEditor()
 
         // Running conditions
         let failedCondition = false
@@ -147,6 +193,16 @@ window.opinion = window.opinion ?? {
         self.startHandlingEditor()
     },
 
+    /**
+     * Make a toast
+     * 
+     * Passed through a script tag to let it execute from the page.
+     * 
+     * @param message Toast message
+     * @param type Toast type
+     * @param duration Duration in mills
+     * @param close Do you want a close button to be shown?
+     */
     makeToast(message = null, type = 'default', duration = 5000, close = true) {
         const types = {
             default: {
@@ -159,7 +215,8 @@ window.opinion = window.opinion ?? {
             },
         }
 
-        Toastify({
+        // Create toastify payload
+        const payload = {
             text: message,
             duration: duration,
             escapeMarkup: false,
@@ -168,7 +225,22 @@ window.opinion = window.opinion ?? {
             position: 'center',
             stopOnFocus: 'true',
             style: types[type],
-        }).showToast();
+        }
+
+        // Turn payload into JSON so we can pass it through a raw script element
+        const payloadAsJson = JSON.stringify(payload)
+        this.appendRawScript(`
+            {
+                // Greasemonkey doesn't like it when we call a function through 'unsafeWindow'
+                // This script block is appended to the page and will not be executed with elevated permissions.
+            
+                // This payload was converted to JSON by the handling editor and is accessible as an object
+                // without any changes
+                const payload = ${payloadAsJson}
+            
+                // Since this code block runs from the page, we can access Toastify without going through 'window'
+                Toastify(payload).showToast()
+            }`)
     },
 
     /**
@@ -408,7 +480,6 @@ input[type=number] {
 `
         document.body.append(handlingEditorOuterElement)
 
-        const self = this
         const handlingEditorToggleElement = this.getHandlingEditorToggleElement()
         const handlingEditorElement = this.getHandlingEditorElement()
 
@@ -429,13 +500,14 @@ input[type=number] {
         this.loadHandling(true)
 
         // Creating event listener for reset button
+        const self = this
         const resetButtonElement = document.getElementById('handling-reset')
         resetButtonElement.addEventListener('click', () => {
             self.resetHandling()
         })
     },
     updateHandling(handlingKey, value) {
-        const handlingMetrics = window.exposedI.current.vehicleController.vehicleDef.metrics
+        const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
     },
     resetHandling() {
@@ -447,7 +519,7 @@ input[type=number] {
             const handlingKey = this.handlingKeys[i]
 
             // Resetting handling for the current key
-            const handlingMetrics = window.exposedI.current.vehicleController.vehicleDef.metrics
+            const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
             handlingMetrics[handlingKey] = this.settings.defaultHandling[handlingKey]
         }
 
@@ -455,7 +527,6 @@ input[type=number] {
         this.loadHandling(false)
     },
     loadHandling(firstRun = false) {
-        var self = this;
         if (firstRun) {
             this.settings.defaultHandling = {}
         }
@@ -465,7 +536,7 @@ input[type=number] {
 
             // Getting corresponding input and setting initial value
             const inputElement = document.getElementById(`handling-${handlingKey}`)
-            const handlingMetrics = window.exposedI.current.vehicleController.vehicleDef.metrics
+            const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
             const initialValue = handlingMetrics[handlingKey]
             inputElement.value = initialValue
             this.log('Set initial value of', handlingKey, 'to', initialValue)
@@ -475,6 +546,7 @@ input[type=number] {
                 this.settings.defaultHandling[handlingKey] = initialValue
 
                 // Creating event listener
+                var self = this;
                 inputElement.addEventListener('change', () => {
                     self.updateHandling(handlingKey, inputElement.value)
                 })
@@ -502,7 +574,7 @@ input[type=number] {
         }
 
         function dragMouseDown(e) {
-            e = e || window.event;
+            e = e || getWindow().event;
             e.preventDefault();
             // get the mouse cursor position at startup:
             pos3 = e.clientX;
@@ -517,7 +589,7 @@ input[type=number] {
         }
 
         function elementDrag(e) {
-            e = e || window.event;
+            e = e || getWindow().event;
             e.preventDefault();
             // calculate the new cursor position:
             pos1 = pos3 - e.clientX;
@@ -544,10 +616,11 @@ input[type=number] {
 (function () {
     'use strict';
     addEventListener('beforescriptexecute', (e) => {
-        if (e.target.src === opinion.settings.originalGameScript) {
-            opinion.log('Detected game script, we will try to prevent execution...', e)
+        const handlingEditor = getHandlingEditor()
+        if (e.target.src === handlingEditor.settings.originalGameScript) {
+            handlingEditor.log('Detected game script, we will try to prevent execution...', e)
             e.preventDefault()
-            opinion.initialize()
+            handlingEditor.initialize()
         }
     });
 })();
