@@ -19,7 +19,7 @@ Go to the [latest release](https://github.com/Opinion/slowroads-handling-editor/
 ## Mod preview
 ![Preview of Opinion's Handling Editor](preview.png)
 
-## Common problems
+## Things you might want to know
 
 > Setting values too high or too low can cause the game to crash.  
 > If the game crashes or freezes, just reload the page.
