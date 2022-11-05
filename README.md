@@ -13,7 +13,7 @@ Opinion's Handling Editor is a mod for slowroads.io which gives you access to a 
    - The *userscript* adds an in-game menu for the handling editor.
 
 ## Installation
-Go to the [latest release](/releases/latest) and follow our installation guide.
+Go to the [latest release](https://github.com/Opinion/slowroads-handling-editor/releases/latest) and follow our installation guide.
 
 ## Mod preview
 ![Preview of Opinion's Handling Editor](preview.png)
