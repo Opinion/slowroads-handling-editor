@@ -126,6 +126,10 @@ const Toastmaker = {
             background: 'linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))',
             cursor: 'initial',
         },
+        error: {
+            background: 'linear-gradient(to right bottom, rgb(162, 51, 56), rgb(130, 6, 12))',
+            cursor: 'initial',
+        },
     },
 
     /**
