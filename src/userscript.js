@@ -776,7 +776,8 @@ const HandlingEditor = {
     background: #222222aa;
     border: none;
     color: #BBBECE;
-    margin-left: 4px;
+    padding: 2px 8px;
+    letter-spacing: 2px;
 }
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
