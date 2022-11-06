@@ -12,6 +12,17 @@
 
 /* globals unsafeWindow, window */
 
+const Core = {
+    /**
+     * Custom logger
+     *
+     * @param  {...any} args Arguments you want to log
+     */
+    log(...args) {
+        console.log('[🔧]', '[OPINION]', ...args)
+    },
+}
+
 const WindowInteraction = {
     /**
      * Get window 'unsafeWindow' or 'window'
@@ -53,12 +64,8 @@ const HandlingEditor = {
         modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
     },
 
-    /**
-     * Custom logger
-     */
-    log(...args) {
-        console.log('[🔧]', '[OPINION]', ...args)
-    },
+    /* Include 'Core' */
+    log: Core.log,
 
     /**
      * Append a <script> element to <head>
