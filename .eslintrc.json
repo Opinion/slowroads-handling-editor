@@ -15,6 +15,9 @@
         "quotes": ["error", "single"],
         "no-multi-spaces": ["error"],
         "space-before-function-paren": ["error", "never"],
-        "comma-dangle": ["error", "always-multiline"]
+        "comma-dangle": ["error", "always-multiline"],
+        "object-shorthand": ["error", "methods", {
+            "avoidQuotes": true
+        }]
     }
 }
