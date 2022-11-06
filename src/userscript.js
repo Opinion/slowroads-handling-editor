@@ -68,15 +68,6 @@ const WindowInteraction = {
 
 const DocumentInteraction = {
     /**
-     * Get game version
-     *
-     * @returns {string|undefined}
-     */
-    getGameVersion() {
-        return document.getElementById('splash-version')?.innerText
-    },
-
-    /**
      * Append a <script> element to <head>
      *
      * @param {string} url URL for 'src' attribute
@@ -114,6 +105,31 @@ const DocumentInteraction = {
         element.innerHTML = code
         document.body.append(element)
         Core.log('Appended raw script', { element, code })
+    },
+
+    /**
+     * Get game version
+     *
+     * @returns {string|undefined}
+     */
+    getGameVersion() {
+        return document.getElementById('splash-version')?.innerText
+    },
+
+    /**
+     * Get game's canvas element
+     *
+     * @returns {HTMLElement|null}
+     */
+    getGameCanvasElement() {
+        return document.querySelector('#game-main > canvas.render-canvas')
+    },
+
+    /**
+     * Attempt to put focus on the game's canvas
+     */
+    putFocusOnGameCanvas() {
+        this.getGameCanvasElement()?.focus()
     },
 }
 
@@ -511,6 +527,8 @@ const HandlingEditor = {
     appendScript: DocumentInteraction.appendScript,
     appendStyle: DocumentInteraction.appendStyle,
     appendRawScript: DocumentInteraction.appendRawScript,
+    getGameCanvasElement: DocumentInteraction.getGameCanvasElement,
+    putFocusOnGameCanvas: DocumentInteraction.putFocusOnGameCanvas,
 
     /* Include 'Toastmaker' */
     toastmaker: Toastmaker,
@@ -802,6 +820,7 @@ const HandlingEditor = {
     updateHandling(handlingKey, value) {
         const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
+        this.putFocusOnGameCanvas()
     },
     resetHandling() {
         if (typeof this.settings.defaultHandling === 'undefined') {
@@ -818,6 +837,7 @@ const HandlingEditor = {
 
         // Loading new values to UI
         this.loadHandling(false)
+        this.putFocusOnGameCanvas()
     },
     loadHandling(firstRun = false) {
         if (firstRun) {
