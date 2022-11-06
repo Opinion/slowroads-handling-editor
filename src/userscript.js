@@ -537,6 +537,22 @@ const HandlingEditor = {
     conditionChecker: ConditionChecker,
 
     /**
+     * Hanling keys available in the handling editor
+     * (if you want to add more, remember to add matching HTML inputs too)
+     */
+    handlingKeys: [
+        'accel', /*      */'topSpeed',
+        'brake', /*      */'reverse',
+        'aeroFactor', /* */'dampening',
+        'drag', /*       */'jerk',
+        'rockFactor', /* */'rollResistance',
+        'slipBase', /*   */'slipMod',
+        'maxSteer', /*   */'steerSpeed',
+        'steerAccel', /* */'steerInterval',
+        'mass',
+    ],
+
+    /**
      * Initialize scripts and dependencies
      */
     initialize() {
@@ -570,22 +586,6 @@ const HandlingEditor = {
             self.startHandlingEditor()
         }, 100)
     },
-
-    /**
-     * Hanling keys available in the handling editor
-     * (if you want to add more, remember to add matching HTML inputs too)
-     */
-    handlingKeys: [
-        'accel', /*      */'topSpeed',
-        'brake', /*      */'reverse',
-        'aeroFactor', /* */'dampening',
-        'drag', /*       */'jerk',
-        'rockFactor', /* */'rollResistance',
-        'slipBase', /*   */'slipMod',
-        'maxSteer', /*   */'steerSpeed',
-        'steerAccel', /* */'steerInterval',
-        'mass',
-    ],
 
     /**
      * Starts handling editor (main)
