@@ -777,7 +777,12 @@ const HandlingEditor = {
     border: none;
     color: #BBBECE;
     padding: 2px 8px;
-    letter-spacing: 2px;
+    border-bottom: 2px solid transparent;
+    transition: all ease-in-out 200ms;
+}
+#handling-editor .control-grid > div > div > input:focus {
+    border-bottom: 2px solid #424f82;
+    box-shadow: 2px 2px 5px 0px #2424243d;
 }
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
