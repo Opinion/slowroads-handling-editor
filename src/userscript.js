@@ -12,37 +12,45 @@
 
 /* globals unsafeWindow, window */
 
-/**
- * Get window 'unsafeWindow' or 'window'
- *
- * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
- * Details: https://wiki.greasespot.net/UnsafeWindow
- */
-function getWindow() {
-    return typeof unsafeWindow === 'object'
-        ? unsafeWindow
-        : window
-}
+const WindowInteraction = {
+    /**
+     * Get window 'unsafeWindow' or 'window'
+     *
+     * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
+     * Details: https://wiki.greasespot.net/UnsafeWindow
+     *
+     * @returns {Window}
+     */
+    getWindow() {
+        return typeof unsafeWindow === 'object'
+            ? unsafeWindow
+            : window
+    },
 
-/**
- * Get Toastify through the actual window
- */
-function getToastify() {
-    return getWindow()?.Toastify
-}
+    /**
+     * Get Toastify through window
+     *
+     * @returns {Toastify|function|null}
+     */
+    getToastify() {
+        return this.getWindow()?.Toastify
+    },
 
-/**
- * Get 'exposedI' through window
- */
-function getExposedI() {
-    return getWindow()?.exposedI
+    /**
+     * Get 'exposedI' through window
+     *
+     * @returns {object|null}
+     */
+    getExposedI() {
+        return this.getWindow()?.exposedI
+    },
 }
 
 const HandlingEditor = {
     settings: {
         supportedVersion: '1.0.1',
         originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
-        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js'
+        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
     },
 
     /**
@@ -117,22 +125,22 @@ const HandlingEditor = {
     waitConditions: [
         {
             name: 'Toastify.js',
-            passes: () => typeof getToastify() === 'function',
+            passes: () => typeof WindowInteraction.getToastify() === 'function',
             checkMessage: 'Waiting for Toastify.js to finish loading...',
-            successMessage: 'Toastify.js successfully loaded!'
+            successMessage: 'Toastify.js successfully loaded!',
         },
         {
             name: 'Game start',
-            passes: () => getExposedI()?.current?.firstFrame === true,
+            passes: () => WindowInteraction.getExposedI()?.current?.firstFrame === true,
             checkMessage: 'Waiting for the game to start (press \'begin\')...',
-            successMessage: 'Game has started!'
+            successMessage: 'Game has started!',
         },
         {
             name: 'Vehicle spawn',
-            passes: () => typeof getExposedI()?.current?.vehicleController !== 'undefined',
+            passes: () => typeof WindowInteraction.getExposedI()?.current?.vehicleController !== 'undefined',
             failedMessage: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
-            successMessage: 'Found \'vehicleController\'.'
-        }
+            successMessage: 'Found \'vehicleController\'.',
+        },
     ],
 
     /**
@@ -200,12 +208,12 @@ const HandlingEditor = {
         const types = {
             default: {
                 background: 'linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))',
-                cursor: 'initial'
+                cursor: 'initial',
             },
             info: {
                 background: 'linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))',
-                cursor: 'initial'
-            }
+                cursor: 'initial',
+            },
         }
 
         // Create toastify payload
@@ -217,7 +225,7 @@ const HandlingEditor = {
             gravity: 'top',
             position: 'center',
             stopOnFocus: 'true',
-            style: types[type]
+            style: types[type],
         }
 
         // Turn payload into JSON so we can pass it through a raw script element
@@ -249,7 +257,7 @@ const HandlingEditor = {
         'slipBase', /*   */'slipMod',
         'maxSteer', /*   */'steerSpeed',
         'steerAccel', /* */'steerInterval',
-        'mass'
+        'mass',
     ],
 
     /**
@@ -500,7 +508,7 @@ input[type=number] {
         })
     },
     updateHandling(handlingKey, value) {
-        const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
+        const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
     },
     resetHandling() {
@@ -512,7 +520,7 @@ input[type=number] {
             const handlingKey = this.handlingKeys[i]
 
             // Resetting handling for the current key
-            const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
+            const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
             handlingMetrics[handlingKey] = this.settings.defaultHandling[handlingKey]
         }
 
@@ -529,7 +537,7 @@ input[type=number] {
 
             // Getting corresponding input and setting initial value
             const inputElement = document.getElementById(`handling-${handlingKey}`)
-            const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
+            const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
             const initialValue = handlingMetrics[handlingKey]
             inputElement.value = initialValue
             this.log('Set initial value of', handlingKey, 'to', initialValue)
@@ -567,7 +575,7 @@ input[type=number] {
         }
 
         function dragMouseDown(e) {
-            e = e || getWindow().event
+            e = e || WindowInteraction.getWindow().event
             e.preventDefault()
             // get the mouse cursor position at startup:
             pos3 = e.clientX
@@ -582,7 +590,7 @@ input[type=number] {
         }
 
         function elementDrag(e) {
-            e = e || getWindow().event
+            e = e || WindowInteraction.getWindow().event
             e.preventDefault()
             // calculate the new cursor position:
             pos1 = pos3 - e.clientX
@@ -603,7 +611,7 @@ input[type=number] {
                 headerElement.classList.remove('grabbing')
             }
         }
-    }
+    },
 };
 
 (function() {
