@@ -21,6 +21,15 @@ const Core = {
     log(...args) {
         console.log('[🔧]', '[OPINION]', ...args)
     },
+
+    /**
+     * Settings
+     */
+    settings: {
+        supportedVersion: '1.0.1',
+        originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
+        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
+    },
 }
 
 const WindowInteraction = {
@@ -58,14 +67,9 @@ const WindowInteraction = {
 }
 
 const HandlingEditor = {
-    settings: {
-        supportedVersion: '1.0.1',
-        originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
-        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
-    },
-
     /* Include 'Core' */
     log: Core.log,
+    settings: Core.settings,
 
     /**
      * Append a <script> element to <head>
