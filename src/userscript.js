@@ -108,6 +108,79 @@ const DocumentInteraction = {
     },
 }
 
+/**
+ * Toastmaker
+ *
+ * It makes toasts (:
+ */
+const Toastmaker = {
+    /**
+     * Configured toast styles
+     */
+    styles: {
+        default: {
+            background: 'linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))',
+            cursor: 'initial',
+        },
+        info: {
+            background: 'linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))',
+            cursor: 'initial',
+        },
+    },
+
+    /**
+     * Get toast style
+     *
+     * @param {string|null} style Name of a toast style
+     * @returns {object}
+     */
+    getStyle(style = null) {
+        return this.styles[style]
+            ? this.styles[style]
+            : this.styles.default
+    },
+
+    /**
+     * Make a toast
+     *
+     * Passed through a script tag to let it execute from the page.
+     *
+     * @param {string} message Toast message
+     * @param {string|null} style Name of a toast style
+     * @param {number} duration Duration in milliseconds
+     * @param {boolean} close Do you want a close button to be shown?
+     */
+    makeToast(message, style = null, duration = 5000, close = true) {
+        // Create toastify payload
+        const payload = {
+            text: message,
+            duration: duration,
+            escapeMarkup: false,
+            close: close,
+            gravity: 'top',
+            position: 'center',
+            stopOnFocus: 'true',
+            style: this.getStyle(style),
+        }
+
+        // Turn payload into JSON so we can pass it through a raw script element
+        const payloadAsJson = JSON.stringify(payload)
+        DocumentInteraction.appendRawScript(`
+{
+    // Greasemonkey doesn't like it when we call a function through 'unsafeWindow'
+    // This script block is appended to the page and will not be executed with elevated permissions.
+
+    // This payload was converted to JSON by the handling editor and is accessible as an object
+    // without any changes
+    const payload = ${payloadAsJson}
+
+    // Since this code block runs from the page, we can access Toastify without going through 'window'
+    Toastify(payload)?.showToast()
+}`)
+        // end of multiline string
+    },
+}
+
 const HandlingEditor = {
     /* Include 'Core' */
     log: Core.log,
@@ -117,6 +190,9 @@ const HandlingEditor = {
     appendScript: DocumentInteraction.appendScript,
     appendStyle: DocumentInteraction.appendStyle,
     appendRawScript: DocumentInteraction.appendRawScript,
+
+    /* Include 'Toastmaker' */
+    toastmaker: Toastmaker,
 
     /**
      * Initialize scripts and dependencies
@@ -219,56 +295,6 @@ const HandlingEditor = {
     },
 
     /**
-     * Make a toast
-     *
-     * Passed through a script tag to let it execute from the page.
-     *
-     * @param message Toast message
-     * @param type Toast type
-     * @param duration Duration in mills
-     * @param close Do you want a close button to be shown?
-     */
-    makeToast(message = null, type = 'default', duration = 5000, close = true) {
-        const types = {
-            default: {
-                background: 'linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))',
-                cursor: 'initial',
-            },
-            info: {
-                background: 'linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))',
-                cursor: 'initial',
-            },
-        }
-
-        // Create toastify payload
-        const payload = {
-            text: message,
-            duration,
-            escapeMarkup: false,
-            close,
-            gravity: 'top',
-            position: 'center',
-            stopOnFocus: 'true',
-            style: types[type],
-        }
-
-        // Turn payload into JSON so we can pass it through a raw script element
-        const payloadAsJson = JSON.stringify(payload)
-        this.appendRawScript(`
-            {
-                // Greasemonkey doesn't like it when we call a function through 'unsafeWindow'
-                // This script block is appended to the page and will not be executed with elevated permissions.
-            
-                // This payload was converted to JSON by the handling editor and is accessible as an object
-                // without any changes
-                const payload = ${payloadAsJson}
-            
-                // Since this code block runs from the page, we can access Toastify without going through 'window'
-                Toastify(payload).showToast()
-            }`)
-    },
-
-    /**
      * Hanling keys available in the handling editor
      * (if you want to add more, remember to add matching HTML inputs too)
      */
@@ -288,8 +314,8 @@ const HandlingEditor = {
      * Starts handling editor (main)
      */
     startHandlingEditor() {
-        this.makeToast('You can open the handling editor by pressing the cog in the <b>top left</b> corner.', 'default', 25000)
-        this.makeToast('🔧 Now playing with Opinion\'s handling editor. Have fun out there :)', 'info', 12000)
+        this.toastmaker.makeToast('You can open the handling editor by pressing the cog in the <b>top left</b> corner.', 'default', 25000)
+        this.toastmaker.makeToast('🔧 Now playing with Opinion\'s handling editor. Have fun out there :)', 'info', 12000)
 
         // Window toggled and position
         const windowX = '4.5rem'
@@ -537,7 +563,7 @@ input[type=number] {
     },
     resetHandling() {
         if (typeof this.settings.defaultHandling === 'undefined') {
-            this.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
+            this.toastmaker.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
             return
         }
         for (let i = 0; i < this.handlingKeys.length; i++) {
