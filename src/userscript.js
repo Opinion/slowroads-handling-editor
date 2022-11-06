@@ -18,7 +18,7 @@
  * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
  * Details: https://wiki.greasespot.net/UnsafeWindow
  */
-function getWindow () {
+function getWindow() {
     return typeof unsafeWindow === 'object'
         ? unsafeWindow
         : window
@@ -27,25 +27,18 @@ function getWindow () {
 /**
  * Get Toastify through the actual window
  */
-function getToastify () {
+function getToastify() {
     return getWindow()?.Toastify
 }
 
 /**
  * Get 'exposedI' through window
  */
-function getExposedI () {
+function getExposedI() {
     return getWindow()?.exposedI
 }
 
-/**
- * Get 'opinionsHandlingEditor' through window
- */
-function getHandlingEditor () {
-    return getWindow()?.opinionsHandlingEditor
-}
-
-getWindow().opinionsHandlingEditor = {
+const HandlingEditor = {
     settings: {
         supportedVersion: '1.0.1',
         originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
@@ -55,14 +48,14 @@ getWindow().opinionsHandlingEditor = {
     /**
      * Custom logger
      */
-    log (...args) {
+    log(...args) {
         console.log('[🔧]', '[OPINION]', ...args)
     },
 
     /**
      * Append a <script> element to <head>
      */
-    appendScript (src) {
+    appendScript(src) {
         const element = document.createElement('script')
         element.src = src
         document.head.append(element)
@@ -72,7 +65,7 @@ getWindow().opinionsHandlingEditor = {
     /**
      * Append a <link> element to <head>
      */
-    appendStyle (src) {
+    appendStyle(src) {
         const element = document.createElement('link')
         element.href = src
         element.rel = 'stylesheet'
@@ -86,7 +79,7 @@ getWindow().opinionsHandlingEditor = {
      * Useful because we can de-elevate (is that a word?) code and let it run from the page.
      * Code will NOT run with the elevated permissions of the userscript.
      */
-    appendRawScript (code) {
+    appendRawScript(code) {
         const element = document.createElement('script')
         element.innerHTML = code
         document.body.append(element)
@@ -96,7 +89,7 @@ getWindow().opinionsHandlingEditor = {
     /**
      * Initialize scripts and dependencies
      */
-    initialize () {
+    initialize() {
         this.log('Initializing...')
 
         // Append modifified game script
@@ -147,8 +140,8 @@ getWindow().opinionsHandlingEditor = {
      *
      * Note: Runs in a 'setInterval' timer.
      */
-    waitUntilReady () {
-        const self = getHandlingEditor()
+    waitUntilReady() {
+        const self = HandlingEditor
 
         // Running conditions
         let failedCondition = false
@@ -203,7 +196,7 @@ getWindow().opinionsHandlingEditor = {
      * @param duration Duration in mills
      * @param close Do you want a close button to be shown?
      */
-    makeToast (message = null, type = 'default', duration = 5000, close = true) {
+    makeToast(message = null, type = 'default', duration = 5000, close = true) {
         const types = {
             default: {
                 background: 'linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))',
@@ -262,7 +255,7 @@ getWindow().opinionsHandlingEditor = {
     /**
      * Starts handling editor (main)
      */
-    startHandlingEditor () {
+    startHandlingEditor() {
         this.makeToast('You can open the handling editor by pressing the cog in the <b>top left</b> corner.', 'default', 25000)
         this.makeToast('🔧 Now playing with Opinion\'s handling editor. Have fun out there :)', 'info', 12000)
 
@@ -487,7 +480,7 @@ input[type=number] {
         this.dragElement(handlingEditorElement)
 
         // Event :: Toggle handling editor
-        handlingEditorToggleElement.addEventListener('click', function () {
+        handlingEditorToggleElement.addEventListener('click', function() {
             handlingEditorElement.classList.toggle('active')
             if (handlingEditorElement.classList.contains('active')) {
                 localStorage.setItem('x-handling-editor-active', true)
@@ -506,11 +499,11 @@ input[type=number] {
             self.resetHandling()
         })
     },
-    updateHandling (handlingKey, value) {
+    updateHandling(handlingKey, value) {
         const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
     },
-    resetHandling () {
+    resetHandling() {
         if (typeof this.settings.defaultHandling === 'undefined') {
             this.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
             return
@@ -526,7 +519,7 @@ input[type=number] {
         // Loading new values to UI
         this.loadHandling(false)
     },
-    loadHandling (firstRun = false) {
+    loadHandling(firstRun = false) {
         if (firstRun) {
             this.settings.defaultHandling = {}
         }
@@ -546,23 +539,23 @@ input[type=number] {
                 this.settings.defaultHandling[handlingKey] = initialValue
 
                 // Creating event listener
-                var self = this
+                const self = this
                 inputElement.addEventListener('change', () => {
                     self.updateHandling(handlingKey, inputElement.value)
                 })
             }
         }
     },
-    getHandlingEditorOuterElement () {
+    getHandlingEditorOuterElement() {
         return document.getElementById('handling-editor-outer')
     },
-    getHandlingEditorToggleElement () {
+    getHandlingEditorToggleElement() {
         return document.getElementById('handling-editor-toggle')
     },
-    getHandlingEditorElement () {
+    getHandlingEditorElement() {
         return document.getElementById('handling-editor')
     },
-    dragElement (element) {
+    dragElement(element) {
         let pos1 = 0; let pos2 = 0; let pos3 = 0; let pos4 = 0
         const headerElement = document.getElementById(element.id + '-header')
         if (headerElement) {
@@ -573,7 +566,7 @@ input[type=number] {
             element.onmousedown = dragMouseDown
         }
 
-        function dragMouseDown (e) {
+        function dragMouseDown(e) {
             e = e || getWindow().event
             e.preventDefault()
             // get the mouse cursor position at startup:
@@ -588,7 +581,7 @@ input[type=number] {
             }
         }
 
-        function elementDrag (e) {
+        function elementDrag(e) {
             e = e || getWindow().event
             e.preventDefault()
             // calculate the new cursor position:
@@ -601,7 +594,7 @@ input[type=number] {
             element.style.left = (element.offsetLeft - pos1) + 'px'
         }
 
-        function closeDragElement () {
+        function closeDragElement() {
             // stop moving when mouse button is released:
             document.onmouseup = null
             document.onmousemove = null
@@ -613,14 +606,13 @@ input[type=number] {
     }
 };
 
-(function () {
+(function() {
     'use strict'
     addEventListener('beforescriptexecute', (e) => {
-        const handlingEditor = getHandlingEditor()
-        if (e.target.src === handlingEditor.settings.originalGameScript) {
-            handlingEditor.log('Detected game script, we will try to prevent execution...', e)
+        if (e.target.src === HandlingEditor.settings.originalGameScript) {
+            HandlingEditor.log('Detected game script, we will try to prevent execution...', e)
             e.preventDefault()
-            handlingEditor.initialize()
+            HandlingEditor.initialize()
         }
     })
 })()
