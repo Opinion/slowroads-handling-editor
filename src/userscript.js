@@ -10,88 +10,513 @@
 // @run-at       document-start
 // ==/UserScript==
 
-/* globals opinionsHandlingEditor, Toastify, exposedI */
+/* globals unsafeWindow, window */
 
-/**
- * Get window 'unsafeWindow' or 'window'
- * 
- * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
- * Details: https://wiki.greasespot.net/UnsafeWindow
- */
- function getWindow() {
-    return typeof unsafeWindow === 'object'
-        ? unsafeWindow
-        : window
-}
-
-/**
- * Get Toastify through the actual window
- */
-function getToastify() {
-    return getWindow()?.Toastify
-}
-
-/**
- * Get 'exposedI' through window
- */
-function getExposedI() {
-    return getWindow()?.exposedI
-}
-
-/**
- * Get 'opinionsHandlingEditor' through window
- */
-function getHandlingEditor() {
-    return getWindow()?.opinionsHandlingEditor
-}
-
-getWindow().opinionsHandlingEditor = {
-    settings: {
-        supportedVersion: '1.0.1',
-        originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
-        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
-    },
-
+const Core = {
     /**
      * Custom logger
+     *
+     * @param  {...any} args Arguments you want to log
      */
     log(...args) {
         console.log('[🔧]', '[OPINION]', ...args)
     },
 
     /**
+     * Settings
+     */
+    settings: {
+        supportedVersion: '1.0.1',
+        originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
+        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
+    },
+}
+
+const WindowInteraction = {
+    /**
+     * Get window 'unsafeWindow' or 'window'
+     *
+     * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
+     * Details: https://wiki.greasespot.net/UnsafeWindow
+     *
+     * @returns {Window}
+     */
+    getWindow() {
+        return typeof unsafeWindow === 'object'
+            ? unsafeWindow
+            : window
+    },
+
+    /**
+     * Get Toastify through window
+     *
+     * @returns {Toastify|function|null}
+     */
+    getToastify() {
+        return this.getWindow()?.Toastify
+    },
+
+    /**
+     * Get 'exposedI' through window
+     *
+     * @returns {object|null}
+     */
+    getExposedI() {
+        return this.getWindow()?.exposedI
+    },
+}
+
+const DocumentInteraction = {
+    /**
+     * Get game version
+     *
+     * @returns {string|undefined}
+     */
+    getGameVersion() {
+        return document.getElementById('splash-version')?.innerText
+    },
+
+    /**
      * Append a <script> element to <head>
+     *
+     * @param {string} url URL for 'src' attribute
      */
     appendScript(src) {
         const element = document.createElement('script')
         element.src = src
         document.head.append(element)
-        this.log('Appended script', { element: element, src: src })
+        Core.log('Appended script', { element, src })
     },
 
     /**
      * Append a <link> element to <head>
+     *
+     * @param {string} url URL for rel attribute
      */
     appendStyle(src) {
         const element = document.createElement('link')
         element.href = src
         element.rel = 'stylesheet'
         document.head.append(element)
-        this.log('Appended style', { element: element, src: src })
+        Core.log('Appended style', { element, src })
     },
 
     /**
      * Append a <script> element to <body> with raw code
-     * 
+     *
      * Useful because we can de-elevate (is that a word?) code and let it run from the page.
      * Code will NOT run with the elevated permissions of the userscript.
+     *
+     * @param {string} code Javascript code
      */
     appendRawScript(code) {
         const element = document.createElement('script')
         element.innerHTML = code
         document.body.append(element)
-        this.log('Appended raw script', { element: element, code: code })
+        Core.log('Appended raw script', { element, code })
     },
+}
+
+/**
+ * Toastmaker
+ *
+ * It makes toasts (:
+ */
+const Toastmaker = {
+    /**
+     * Configured toast styles
+     */
+    styles: {
+        default: {
+            background: 'linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))',
+            cursor: 'initial',
+        },
+        info: {
+            background: 'linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))',
+            cursor: 'initial',
+        },
+        error: {
+            background: 'linear-gradient(to right bottom, rgb(162, 51, 56), rgb(130, 6, 12))',
+            cursor: 'initial',
+        },
+    },
+
+    /**
+     * Get toast style
+     *
+     * @param {string|null} style Name of a toast style
+     * @returns {object}
+     */
+    getStyle(style = null) {
+        return this.styles[style]
+            ? this.styles[style]
+            : this.styles.default
+    },
+
+    /**
+     * Make a toast
+     *
+     * Passed through a script tag to let it execute from the page.
+     *
+     * @param {string} message Toast message
+     * @param {string|null} style Name of a toast style
+     * @param {number} duration Duration in milliseconds
+     * @param {boolean} close Do you want a close button to be shown?
+     */
+    makeToast(message, style = null, duration = 5000, close = true) {
+        // Create toastify payload
+        const payload = {
+            text: message,
+            duration: duration,
+            escapeMarkup: false,
+            close: close,
+            gravity: 'top',
+            position: 'center',
+            stopOnFocus: 'true',
+            style: this.getStyle(style),
+        }
+
+        // Turn payload into JSON so we can pass it through a raw script element
+        const payloadAsJson = JSON.stringify(payload)
+        DocumentInteraction.appendRawScript(`
+{
+    // Greasemonkey doesn't like it when we call a function through 'unsafeWindow'
+    // This script block is appended to the page and will not be executed with elevated permissions.
+
+    // This payload was converted to JSON by the handling editor and is accessible as an object
+    // without any changes
+    const payload = ${payloadAsJson}
+
+    // Since this code block runs from the page, we can access Toastify without going through 'window'
+    Toastify(payload)?.showToast()
+}`)
+        // end of multiline string
+    },
+}
+
+/**
+ * Condition Checker
+ *
+ * ## Behavior
+ *  - Condition state is stored in 'condition.state'.
+ *  - When a condition fails, the loop will break and the condition will be checked again next time.
+ *  - When a condition passes, 'condition.state.passed' will be set to 'true'.
+ *    - Next loop, the condition will not be checked through 'condition.passes' because 'condition.state.passed' is set
+ *      to 'true'.
+ *    - Even if 'condition.state.passed' is 'true', 'condition.onPass' will be used ('condition.onPass' behaves like
+ *      normal).
+ *    - This descision might seem a little weird. It is needed to avoid an already-passing conditon to fail later.
+ *    - Example; Checking the game version requires a specific HTML element. The element is removed when you 'begin' the
+ *      game.
+ *    - TL;DR When a condition has passed, it will never fail during later checks.
+ *
+ *
+ *
+ * ## Condition structure
+ *  - condition.name        | {string} (Required) Name of the condition.
+ *  - condition.passes      | {function} (Required) Requirement to pass the condition.
+ *  - condition.beforeCheck | {object|null|undefined} (Optional) Properties documented below.
+ *  - condition.onPass      | {object|null|undefined} (Optional) Properties documented below.
+ *  - condition.onFail      | {object|null|undefined} (Optional) Properties documented below.
+ *  - condition.state       | {object|null|undefined} (Automatic) Properties documented below.
+ *
+ *
+ * ### Properties for 'beforeCheck', 'onPass' and 'onFail'
+ *  - message        | {string|null|undefined} Message to be logged.
+ *  - messageOnce    | {boolean|null|undefined} Do you want the message to be logged once? Defaults to 'true'.
+ *  - run            | {function|null|undefined} A function you want to run.
+ *  - runOnce        | {boolean|null|undefined} Do you want the run function to execute once? Defaults to 'true'.
+ *  - throwException | {boolean|null|undefined} Do you want to exit the script at this point (after executing 'run'
+ *                                              function)? Defaults to 'false'.
+ *
+ * Be careful with how you set up the 'run' function. In most cases you will want 'runOnce' to be 'true'.
+ *
+ * Remember: Conditions will run again if one fails. 'beforeCheck', 'onPass' and 'onFail' can happen many times before
+ *           all conditions have passed.
+ *
+ *
+ * ### Properties for 'state' (handled automatically)
+ *  - passed             | {boolean|null|undefined} Has the condition passed once?
+ *  - beforeCheckMessage | {boolean|null|undefined} Has 'beforeCheck.message' been logged once?
+ *  - beforeCheckRun     | {boolean|null|undefined} Has 'beforeCheck.run' been executed once?
+ *  - onPassMessage      | {boolean|null|undefined} Has 'onPass.message' been logged once?
+ *  - onPassRun          | {boolean|null|undefined} Has 'onPass.run' been executed once?
+ *  - onFailMessage      | {boolean|null|undefined} Has 'onFail.message' been logged once?
+ *  - onFailRun          | {boolean|null|undefined} Has 'onFail.run' been executed once?
+ *
+ * Note: 'condition.state' is handled automatically. please don't define anything here.
+ *
+ *
+ *
+ * ## Full object example (with state)
+ * ```
+ *  const condition = {
+ *      name: 'Example condition',
+ *      passes: () => typeof 'Hello' === 'string',
+ *      beforeCheck: {
+ *          message: 'Logged before checking the condition.',
+ *          messageOnce: true,
+ *          run: () => console.log('I was executed at \'beforeCheck\'.'),
+ *          runOnce: true,
+ *          throwException: false,
+ *      },
+ *      onPass: {
+ *          message: 'Logged after passing the condition.',
+ *          messageOnce: true,
+ *          run: () => console.log('I was executed at \'onPass\'.'),
+ *          runOnce: true,
+ *          throwException: false,
+ *      },
+ *      onFail: {
+ *          message: 'Logged after failing the condition.',
+ *          messageOnce: true,
+ *          run: () => console.log('I was executed at \'onFail\'.'),
+ *          runOnce: true,
+ *          throwException: true,
+ *      },
+ *      state: {
+ *          passed: false,
+ *          beforeCheckMessage: false,
+ *          beforeCheckRun: false,
+ *          onPassMessage: false,
+ *          onPassRun: false,
+ *          onFailMessage: false,
+ *          onFailRun: false,
+ *      },
+ *  };
+ * ```
+ */
+const ConditionChecker = {
+    conditions: [
+        {
+            name: 'Toastify.js',
+            passes: () => typeof WindowInteraction.getToastify() === 'function',
+            beforeCheck: {
+                message: 'Waiting for Toastify.js to finish loading...',
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'Dependency successfully loaded.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: 'Dependency has not loaded yet.',
+                messageOnce: false,
+            },
+        },
+        {
+            name: 'Game version',
+            passes: () => DocumentInteraction.getGameVersion() === Core.settings.supportedVersion,
+            beforeCheck: {
+                message: `Required game version: '${Core.settings.supportedVersion}'.`,
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'The game version is supported.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: `Game version '${DocumentInteraction.getGameVersion()}' is not supported. Please check if the handling editor has a new release available.`,
+                messageOnce: true,
+                run: () => Toastmaker.makeToast('<b><a style="color: #9bb5ff" href="https://github.com/Opinion/slowroads-handling-editor">Opinion\'s Handling Editor</a></b></br>Game version is not supported. Please check if the handling editor has a new release available.', 'error', 100000),
+                runOnce: true,
+                throwException: true,
+            },
+        },
+        {
+            name: 'Game start',
+            passes: () => WindowInteraction.getExposedI()?.current?.firstFrame === true,
+            beforeCheck: {
+                message: 'Waiting for the game to start (press \'begin\')...',
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'The game has started.',
+                messageOnce: true,
+            },
+        },
+        {
+            name: 'Vehicle spawn',
+            passes: () => typeof WindowInteraction.getExposedI()?.current?.vehicleController !== 'undefined',
+            beforeCheck: {
+                message: 'Waiting for the vehicle to spawn...',
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'Found \'vehicleController\'.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
+                messageOnce: false,
+            },
+        },
+    ],
+
+    internal: {
+        /**
+         * Internal logger for conditions
+         *
+         * @param {object} condition
+         * @param {...any} args
+         */
+        log(condition, ...args) {
+            Core.log(`[Condition: ${condition.name}]`, ...args)
+        },
+
+        /**
+         * Handle condition sections; 'beforeCheck', 'onPass' and 'onFail'
+         *
+         * Default values described in parent-JSDoc are marked with inline comments.
+         *
+         * Steps in order:
+         * 1. Log message if allowed
+         * 2. Run function if allowed
+         * 3. Throw exception if allowed
+         *
+         * @param {object} condition Condition object
+         * @param {string} section Section name
+         */
+        handleSection(condition, section) {
+            // Validate section type
+            if (!['beforeCheck', 'onPass', 'onFail'].includes(section)) {
+                throw Error(`Section '${section}' is not valid.`)
+            }
+
+            // Get state
+            const stateMessageKey = `${section}Message`
+            const stateRunKey = `${section}Run`
+            const messageHasAlreadyBeenLogged = condition.state[stateMessageKey] === true
+            const runHasAlreadyBeenExecuted = condition.state[stateRunKey] === true
+
+            // Get section settings
+            const sectionSettings = condition[section]
+            const messageCanOnlyBeLoggedOnce = sectionSettings.messageOnce !== false // Note: Defaults to 'true' as described in JSDoc
+            const runCanOnlyBeExecutedOnce = sectionSettings.messageOnce !== false // Note: Defaults to 'true' as described in JSDoc
+
+            // Check if we are allowed to log a message
+            const messageIsAString = typeof sectionSettings.message === 'string'
+            const messageCanBeLogged = messageHasAlreadyBeenLogged
+                ? !messageCanOnlyBeLoggedOnce
+                : true
+            if (messageIsAString && messageCanBeLogged) {
+                // Log the message
+                this.log(condition, sectionSettings.message)
+
+                // Save to state
+                condition.state[stateMessageKey] = true
+            }
+
+            // Check if we are allowed to run a function
+            const runIsAFunction = typeof sectionSettings.run === 'function'
+            const runCanBeExecuted = runHasAlreadyBeenExecuted
+                ? !runCanOnlyBeExecutedOnce
+                : true
+            if (runIsAFunction && runCanBeExecuted) {
+                // Run the function
+                sectionSettings.run()
+
+                // Save to state
+                condition.state[stateRunKey] = true
+            }
+
+            // Check if we are allowed to throw an exception
+            if (sectionSettings.throwException === true) {
+                // Note: Defaults to 'false' as described in JSDoc
+                this.log(
+                    condition,
+                    'Halting script exectution because \'throwException\' was true.',
+                    { conditionName: condition.name, condition, sectionName: section, section: sectionSettings },
+                )
+                throw Error(`This exception was thrown by a condition in order to halt script execution. Condition name: '${condition.name}', Section: '${section}'.`)
+            }
+        },
+
+        /**
+         * Check a condition
+         *
+         * Triggers 'beforeCheck', 'onPass' and 'onFail' when needed.
+         *
+         * @param {*} condition
+         */
+        checkCondition(condition) {
+            // Make sure 'beforeCheck', 'onPass' and 'onFail' is an object
+            if (typeof condition.beforeCheck !== 'object') {
+                condition.beforeCheck = {}
+            }
+            if (typeof condition.onPass !== 'object') {
+                condition.onPass = {}
+            }
+            if (typeof condition.onFail !== 'object') {
+                condition.onFail = {}
+            }
+
+            // Make sure state is an object
+            if (typeof condition.state !== 'object') {
+                condition.state = {}
+            }
+
+            // Get state
+            const conditionHasAlreadyPassed = condition.state.passed === true
+
+            // Section :: 'beforeCheck'
+            this.handleSection(condition, 'beforeCheck')
+
+            // Checking condition
+            if (conditionHasAlreadyPassed || condition.passes()) {
+                // Save to state
+                condition.state.passed = true // Important -- Condition will always pass on upcoming checks
+
+                // Section :: 'onPass'
+                this.handleSection(condition, 'onPass')
+
+                // Output: The condition passed
+                return true
+            } else {
+                // Section :: 'onFail'
+                this.handleSection(condition, 'onFail')
+
+                // Output: The condition failed
+                return false
+            }
+        },
+    },
+
+    /**
+     * Check all conditions
+     *
+     * @returns {boolean}
+     */
+    check() {
+        const conditions = this.conditions
+        for (let i = 0; i < conditions.length; i++) {
+            const condition = conditions[i]
+            if (!this.internal.checkCondition(condition)) {
+                // Output: A condition has failed
+                return false
+            }
+        }
+
+        // Output: All conditions have passed
+        return true
+    },
+}
+
+const HandlingEditor = {
+    /* Include 'Core' */
+    log: Core.log,
+    settings: Core.settings,
+
+    /* Include 'DocumentInteraction' */
+    appendScript: DocumentInteraction.appendScript,
+    appendStyle: DocumentInteraction.appendStyle,
+    appendRawScript: DocumentInteraction.appendRawScript,
+
+    /* Include 'Toastmaker' */
+    toastmaker: Toastmaker,
+
+    /* Include 'ConditionChecker' */
+    conditionChecker: ConditionChecker,
 
     /**
      * Initialize scripts and dependencies
@@ -106,141 +531,26 @@ getWindow().opinionsHandlingEditor = {
         this.appendScript('https://cdn.jsdelivr.net/npm/toastify-js')
         this.appendStyle('https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css')
 
-        // Waiting until the game has started and dependencies are loaded
+        // Waiting until dependencies have loaded and the game has started
         this.log('Before we start the handling editor we need to wait for some conditions...')
-        this.settings.pleaseWait = setInterval(this.waitUntilReady, 500)
-    },
-
-    /**
-     * Wait conditions
-     *
-     * ## Condition structure
-     *  - condition.name           : Required : string. Name of the condition.
-     *  - condition.passes         : Required : function. Requirement to pass the condition.
-     *  - condition.checkMessage   : Optional : string, null or undefined. Message before checking the condition.
-     *  - condition.successMessage : Optional : string, null or undefined. Message when passing the condition.
-     *  - condition.failedMessage  : Optional : string, null or undefined. Message when the condition doesn't pass.
-     */
-    waitConditions: [
-        {
-            name: 'Toastify.js',
-            passes: () => typeof getToastify() === 'function',
-            checkMessage: 'Waiting for Toastify.js to finish loading...',
-            successMessage: 'Toastify.js successfully loaded!',
-        },
-        {
-            name: 'Game start',
-            passes: () => getExposedI()?.current?.firstFrame === true,
-            checkMessage: 'Waiting for the game to start (press \'begin\')...',
-            successMessage: 'Game has started!',
-        },
-        {
-            name: 'Vehicle spawn',
-            passes: () => typeof getExposedI()?.current?.vehicleController !== 'undefined',
-            failedMessage: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
-            successMessage: 'Found \'vehicleController\'.',
-        },
-    ],
-
-    /**
-     * Timer function which starts the handling editor when all conditions have passed
-     *
-     * Note: Runs in a 'setInterval' timer.
-     */
-    waitUntilReady() {
-        const self = getHandlingEditor()
-
-        // Running conditions
-        let failedCondition = false
-        const conditions = self.waitConditions
-        for (let i = 0; i < conditions.length; i++) {
-            const condition = conditions[i]
-            const logPrefix = `[Wait condition: ${condition.name}]`
-
-            // Checking 'checkMessage'
-            if (condition.checkMessage) {
-                self.log(logPrefix, condition.checkMessage)
-                condition.checkMessage = null
-            }
-
-            // Checking if the condition passes
-            if (condition.passes() === false) {
-                // Checking 'failedMessage'
-                if (condition.failedMessage) {
-                    // We don't clear failed message because we want to make the user aware that something isn't quite right
-                    self.log(logPrefix, condition.failedMessage)
+        const self = this
+        this.settings.pleaseWait = setInterval(() => {
+            // Checking conditions
+            try {
+                if (!self.conditionChecker.check()) {
+                    return
                 }
-
-                failedCondition = true;
-                break;
+            } catch (exception) {
+                self.log('Caught an exception in ConditionChecker. Stopping loop and halting the script.', exception)
+                clearInterval(self.settings.pleaseWait) // Important -- stops timer
+                return // Important -- halts script
             }
 
-            // Checking 'successMessage'
-            if (condition.successMessage) {
-                self.log(logPrefix, condition.successMessage)
-                condition.successMessage = null
-            }
-        }
-
-        // Exiting if a condition failed
-        if (failedCondition) {
-            return
-        }
-
-        // Stopping timer and starting handling editor
-        self.log('Passed all conditions. Starting handling editor!')
-        clearInterval(self.settings.pleaseWait)
-        self.startHandlingEditor()
-    },
-
-    /**
-     * Make a toast
-     * 
-     * Passed through a script tag to let it execute from the page.
-     * 
-     * @param message Toast message
-     * @param type Toast type
-     * @param duration Duration in mills
-     * @param close Do you want a close button to be shown?
-     */
-    makeToast(message = null, type = 'default', duration = 5000, close = true) {
-        const types = {
-            default: {
-                background: "linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))",
-                cursor: 'initial',
-            },
-            info: {
-                background: "linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))",
-                cursor: 'initial',
-            },
-        }
-
-        // Create toastify payload
-        const payload = {
-            text: message,
-            duration: duration,
-            escapeMarkup: false,
-            close: close,
-            gravity: 'top',
-            position: 'center',
-            stopOnFocus: 'true',
-            style: types[type],
-        }
-
-        // Turn payload into JSON so we can pass it through a raw script element
-        const payloadAsJson = JSON.stringify(payload)
-        this.appendRawScript(`
-            {
-                // Greasemonkey doesn't like it when we call a function through 'unsafeWindow'
-                // This script block is appended to the page and will not be executed with elevated permissions.
-            
-                // This payload was converted to JSON by the handling editor and is accessible as an object
-                // without any changes
-                const payload = ${payloadAsJson}
-            
-                // Since this code block runs from the page, we can access Toastify without going through 'window'
-                Toastify(payload).showToast()
-            }`)
+            // Stopping timer and starting handling editor
+            self.log('Passed all conditions. Starting handling editor!')
+            clearInterval(self.settings.pleaseWait)
+            self.startHandlingEditor()
+        }, 100)
     },
 
     /**
@@ -248,14 +558,14 @@ getWindow().opinionsHandlingEditor = {
      * (if you want to add more, remember to add matching HTML inputs too)
      */
     handlingKeys: [
-        'accel',/*      */'topSpeed',
-        'brake',/*      */'reverse',
-        'aeroFactor',/* */'dampening',
-        'drag',/*       */'jerk',
-        'rockFactor',/* */'rollResistance',
-        'slipBase',/*   */'slipMod',
-        'maxSteer',/*   */'steerSpeed',
-        'steerAccel',/* */'steerInterval',
+        'accel', /*      */'topSpeed',
+        'brake', /*      */'reverse',
+        'aeroFactor', /* */'dampening',
+        'drag', /*       */'jerk',
+        'rockFactor', /* */'rollResistance',
+        'slipBase', /*   */'slipMod',
+        'maxSteer', /*   */'steerSpeed',
+        'steerAccel', /* */'steerInterval',
         'mass',
     ],
 
@@ -263,12 +573,12 @@ getWindow().opinionsHandlingEditor = {
      * Starts handling editor (main)
      */
     startHandlingEditor() {
-        this.makeToast('You can open the handling editor by pressing the cog in the <b>top left</b> corner.', 'default', 25000)
-        this.makeToast('🔧 Now playing with Opinion\'s handling editor. Have fun out there :)', 'info', 12000)
+        this.toastmaker.makeToast('You can open the handling editor by pressing the cog in the <b>top left</b> corner.', 'default', 25000)
+        this.toastmaker.makeToast('🔧 Now playing with Opinion\'s handling editor. Have fun out there :)', 'info', 12000)
 
         // Window toggled and position
-        let windowX = '4.5rem'
-        let windowY = '2rem'
+        const windowX = '4.5rem'
+        const windowY = '2rem'
         let windowActiveClass = ''
         if (localStorage.getItem('x-handling-editor-active')) {
             windowActiveClass = 'active'
@@ -487,7 +797,7 @@ input[type=number] {
         this.dragElement(handlingEditorElement)
 
         // Event :: Toggle handling editor
-        handlingEditorToggleElement.addEventListener('click', function () {
+        handlingEditorToggleElement.addEventListener('click', function() {
             handlingEditorElement.classList.toggle('active')
             if (handlingEditorElement.classList.contains('active')) {
                 localStorage.setItem('x-handling-editor-active', true)
@@ -507,19 +817,19 @@ input[type=number] {
         })
     },
     updateHandling(handlingKey, value) {
-        const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
+        const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
     },
     resetHandling() {
         if (typeof this.settings.defaultHandling === 'undefined') {
-            this.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
-            return;
+            this.toastmaker.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
+            return
         }
-        for (var i = 0; i < this.handlingKeys.length; i++) {
+        for (let i = 0; i < this.handlingKeys.length; i++) {
             const handlingKey = this.handlingKeys[i]
 
             // Resetting handling for the current key
-            const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
+            const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
             handlingMetrics[handlingKey] = this.settings.defaultHandling[handlingKey]
         }
 
@@ -531,12 +841,12 @@ input[type=number] {
             this.settings.defaultHandling = {}
         }
 
-        for (var i = 0; i < this.handlingKeys.length; i++) {
+        for (let i = 0; i < this.handlingKeys.length; i++) {
             const handlingKey = this.handlingKeys[i]
 
             // Getting corresponding input and setting initial value
             const inputElement = document.getElementById(`handling-${handlingKey}`)
-            const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
+            const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
             const initialValue = handlingMetrics[handlingKey]
             inputElement.value = initialValue
             this.log('Set initial value of', handlingKey, 'to', initialValue)
@@ -546,7 +856,7 @@ input[type=number] {
                 this.settings.defaultHandling[handlingKey] = initialValue
 
                 // Creating event listener
-                var self = this;
+                const self = this
                 inputElement.addEventListener('change', () => {
                     self.updateHandling(handlingKey, inputElement.value)
                 })
@@ -563,8 +873,8 @@ input[type=number] {
         return document.getElementById('handling-editor')
     },
     dragElement(element) {
-        var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const headerElement = document.getElementById(element.id + "-header")
+        let pos1 = 0; let pos2 = 0; let pos3 = 0; let pos4 = 0
+        const headerElement = document.getElementById(element.id + '-header')
         if (headerElement) {
             // if present, the header is where you move the DIV from:
             headerElement.onmousedown = dragMouseDown
@@ -574,14 +884,14 @@ input[type=number] {
         }
 
         function dragMouseDown(e) {
-            e = e || getWindow().event;
-            e.preventDefault();
+            e = e || WindowInteraction.getWindow().event
+            e.preventDefault()
             // get the mouse cursor position at startup:
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
+            pos3 = e.clientX
+            pos4 = e.clientY
+            document.onmouseup = closeDragElement
             // call a function whenever the cursor moves:
-            document.onmousemove = elementDrag;
+            document.onmousemove = elementDrag
 
             if (headerElement) {
                 headerElement.classList.add('grabbing')
@@ -589,38 +899,37 @@ input[type=number] {
         }
 
         function elementDrag(e) {
-            e = e || getWindow().event;
-            e.preventDefault();
+            e = e || WindowInteraction.getWindow().event
+            e.preventDefault()
             // calculate the new cursor position:
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
+            pos1 = pos3 - e.clientX
+            pos2 = pos4 - e.clientY
+            pos3 = e.clientX
+            pos4 = e.clientY
             // set the element's new position:
-            element.style.top = (element.offsetTop - pos2) + "px";
-            element.style.left = (element.offsetLeft - pos1) + "px";
+            element.style.top = (element.offsetTop - pos2) + 'px'
+            element.style.left = (element.offsetLeft - pos1) + 'px'
         }
 
         function closeDragElement() {
             // stop moving when mouse button is released:
-            document.onmouseup = null;
-            document.onmousemove = null;
+            document.onmouseup = null
+            document.onmousemove = null
 
             if (headerElement) {
                 headerElement.classList.remove('grabbing')
             }
         }
-    }
+    },
 };
 
-(function () {
-    'use strict';
+(function() {
+    'use strict'
     addEventListener('beforescriptexecute', (e) => {
-        const handlingEditor = getHandlingEditor()
-        if (e.target.src === handlingEditor.settings.originalGameScript) {
-            handlingEditor.log('Detected game script, we will try to prevent execution...', e)
+        if (e.target.src === HandlingEditor.settings.originalGameScript) {
+            HandlingEditor.log('Detected game script, we will try to prevent execution...', e)
             e.preventDefault()
-            handlingEditor.initialize()
+            HandlingEditor.initialize()
         }
-    });
-})();
+    })
+})()

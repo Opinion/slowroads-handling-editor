@@ -1,0 +1,20 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": "standard",
+    "overrides": [
+    ],
+    "parserOptions": {
+        "ecmaVersion": "latest"
+    },
+    "rules": {
+        "indent": ["error", 4],
+        "semi": ["error", "never"],
+        "quotes": ["error", "single"],
+        "no-multi-spaces": ["error"],
+        "space-before-function-paren": ["error", "never"],
+        "comma-dangle": ["error", "always-multiline"]
+    }
+}
