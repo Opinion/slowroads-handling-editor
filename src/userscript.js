@@ -624,38 +624,47 @@ const HandlingEditor = {
             <div>
                 <label for="handling-accel">accel</label>
                 <input type="text" id="handling-accel">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-brake">brake</label>
                 <input type="text" id="handling-brake">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-aeroFactor">aeroFactor</label>
                 <input type="text" id="handling-aeroFactor">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-drag">drag</label>
                 <input type="text" id="handling-drag">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-rockFactor">rockFactor</label>
                 <input type="text" id="handling-rockFactor">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-slipBase">slipBase</label>
                 <input type="text" id="handling-slipBase">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-maxSteer">maxSteer</label>
                 <input type="text" id="handling-maxSteer">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-steerAccel">steerAccel</label>
                 <input type="text" id="handling-steerAccel">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-mass">mass</label>
                 <input type="text" id="handling-mass">
+                <div class="saved">&#x2713; Saved</div>
             </div>
         </div>
         <div class="right">
@@ -663,34 +672,42 @@ const HandlingEditor = {
             <div>
                 <label for="handling-topSpeed">topSpeed</label>
                 <input type="text" id="handling-topSpeed">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-reverse">reverse</label>
                 <input type="text" id="handling-reverse">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-dampening">dampening</label>
                 <input type="text" id="handling-dampening">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-jerk">jerk</label>
                 <input type="text" id="handling-jerk">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-rollResistance">rollResistance</label>
                 <input type="text" id="handling-rollResistance">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-slipMod">slipMod</label>
                 <input type="text" id="handling-slipMod">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-steerSpeed">steerSpeed</label>
                 <input type="text" id="handling-steerSpeed">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-steerInterval">steerInterval</label>
                 <input type="text" id="handling-steerInterval">
+                <div class="saved">&#x2713; Saved</div>
             </div>
             <div>
                 <label for="handling-reset">Messed up?</label>
@@ -768,6 +785,7 @@ const HandlingEditor = {
     margin-right: 16px;
 }
 #handling-editor .control-grid > div > div {
+    position: relative;
     margin-top: 10px;
 }
 #handling-editor .control-grid > div > div > input {
@@ -783,6 +801,20 @@ const HandlingEditor = {
 #handling-editor .control-grid > div > div > input:focus {
     border-bottom: 2px solid #424f82;
     box-shadow: 2px 2px 5px 0px #2424243d;
+}
+#handling-editor .control-grid > div > div > .saved {
+    position: absolute;
+    top: 22px;
+    right: 4px;
+    font-size: 10px;
+    color: #CCC;
+    opacity: 0;
+    transition: all ease-in-out 500ms;
+    pointer-events: none;
+}
+#handling-editor .control-grid > div > div > .saved.active {
+    opacity: 1;
+    color: #20FF00;
 }
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
@@ -868,6 +900,11 @@ const HandlingEditor = {
                 const self = this
                 inputElement.addEventListener('change', () => {
                     self.updateHandling(handlingKey, inputElement.value)
+
+                    // Display saved text in UI
+                    const savedElement = inputElement.parentElement.children[2]
+                    savedElement?.classList?.add('active')
+                    setTimeout(() => { savedElement?.classList?.remove('active') }, 2500)
                 })
             }
         }
