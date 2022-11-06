@@ -773,8 +773,8 @@ const HandlingEditor = {
 `
         document.body.append(handlingEditorOuterElement)
 
-        const handlingEditorToggleElement = this.getHandlingEditorToggleElement()
-        const handlingEditorElement = this.getHandlingEditorElement()
+        const handlingEditorToggleElement = document.getElementById('handling-editor-toggle')
+        const handlingEditorElement = document.getElementById('handling-editor')
 
         // Making handling editor draggable
         this.dragElement(handlingEditorElement)
@@ -845,15 +845,6 @@ const HandlingEditor = {
                 })
             }
         }
-    },
-    getHandlingEditorOuterElement() {
-        return document.getElementById('handling-editor-outer')
-    },
-    getHandlingEditorToggleElement() {
-        return document.getElementById('handling-editor-toggle')
-    },
-    getHandlingEditorElement() {
-        return document.getElementById('handling-editor')
     },
     dragElement(element) {
         let pos1 = 0; let pos2 = 0; let pos3 = 0; let pos4 = 0
