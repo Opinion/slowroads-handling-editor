@@ -10,15 +10,15 @@
 // @run-at       document-start
 // ==/UserScript==
 
-/* globals opinionsHandlingEditor, Toastify, exposedI */
+/* globals unsafeWindow, window */
 
 /**
  * Get window 'unsafeWindow' or 'window'
- * 
+ *
  * To support Greasemonkey, we need to access 'window' through 'unsafeWindow'.
  * Details: https://wiki.greasespot.net/UnsafeWindow
  */
- function getWindow() {
+function getWindow () {
     return typeof unsafeWindow === 'object'
         ? unsafeWindow
         : window
@@ -27,21 +27,21 @@
 /**
  * Get Toastify through the actual window
  */
-function getToastify() {
+function getToastify () {
     return getWindow()?.Toastify
 }
 
 /**
  * Get 'exposedI' through window
  */
-function getExposedI() {
+function getExposedI () {
     return getWindow()?.exposedI
 }
 
 /**
  * Get 'opinionsHandlingEditor' through window
  */
-function getHandlingEditor() {
+function getHandlingEditor () {
     return getWindow()?.opinionsHandlingEditor
 }
 
@@ -49,54 +49,54 @@ getWindow().opinionsHandlingEditor = {
     settings: {
         supportedVersion: '1.0.1',
         originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
-        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
+        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js'
     },
 
     /**
      * Custom logger
      */
-    log(...args) {
+    log (...args) {
         console.log('[🔧]', '[OPINION]', ...args)
     },
 
     /**
      * Append a <script> element to <head>
      */
-    appendScript(src) {
+    appendScript (src) {
         const element = document.createElement('script')
         element.src = src
         document.head.append(element)
-        this.log('Appended script', { element: element, src: src })
+        this.log('Appended script', { element, src })
     },
 
     /**
      * Append a <link> element to <head>
      */
-    appendStyle(src) {
+    appendStyle (src) {
         const element = document.createElement('link')
         element.href = src
         element.rel = 'stylesheet'
         document.head.append(element)
-        this.log('Appended style', { element: element, src: src })
+        this.log('Appended style', { element, src })
     },
 
     /**
      * Append a <script> element to <body> with raw code
-     * 
+     *
      * Useful because we can de-elevate (is that a word?) code and let it run from the page.
      * Code will NOT run with the elevated permissions of the userscript.
      */
-    appendRawScript(code) {
+    appendRawScript (code) {
         const element = document.createElement('script')
         element.innerHTML = code
         document.body.append(element)
-        this.log('Appended raw script', { element: element, code: code })
+        this.log('Appended raw script', { element, code })
     },
 
     /**
      * Initialize scripts and dependencies
      */
-    initialize() {
+    initialize () {
         this.log('Initializing...')
 
         // Append modifified game script
@@ -126,20 +126,20 @@ getWindow().opinionsHandlingEditor = {
             name: 'Toastify.js',
             passes: () => typeof getToastify() === 'function',
             checkMessage: 'Waiting for Toastify.js to finish loading...',
-            successMessage: 'Toastify.js successfully loaded!',
+            successMessage: 'Toastify.js successfully loaded!'
         },
         {
             name: 'Game start',
             passes: () => getExposedI()?.current?.firstFrame === true,
             checkMessage: 'Waiting for the game to start (press \'begin\')...',
-            successMessage: 'Game has started!',
+            successMessage: 'Game has started!'
         },
         {
             name: 'Vehicle spawn',
             passes: () => typeof getExposedI()?.current?.vehicleController !== 'undefined',
             failedMessage: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
-            successMessage: 'Found \'vehicleController\'.',
-        },
+            successMessage: 'Found \'vehicleController\'.'
+        }
     ],
 
     /**
@@ -147,7 +147,7 @@ getWindow().opinionsHandlingEditor = {
      *
      * Note: Runs in a 'setInterval' timer.
      */
-    waitUntilReady() {
+    waitUntilReady () {
         const self = getHandlingEditor()
 
         // Running conditions
@@ -171,8 +171,8 @@ getWindow().opinionsHandlingEditor = {
                     self.log(logPrefix, condition.failedMessage)
                 }
 
-                failedCondition = true;
-                break;
+                failedCondition = true
+                break
             }
 
             // Checking 'successMessage'
@@ -195,36 +195,36 @@ getWindow().opinionsHandlingEditor = {
 
     /**
      * Make a toast
-     * 
+     *
      * Passed through a script tag to let it execute from the page.
-     * 
+     *
      * @param message Toast message
      * @param type Toast type
      * @param duration Duration in mills
      * @param close Do you want a close button to be shown?
      */
-    makeToast(message = null, type = 'default', duration = 5000, close = true) {
+    makeToast (message = null, type = 'default', duration = 5000, close = true) {
         const types = {
             default: {
-                background: "linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))",
-                cursor: 'initial',
+                background: 'linear-gradient(to right bottom, rgb(158, 168, 170), rgb(124, 147, 155))',
+                cursor: 'initial'
             },
             info: {
-                background: "linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))",
-                cursor: 'initial',
-            },
+                background: 'linear-gradient(to bottom right, rgb(17, 130, 114), rgb(70, 110, 125))',
+                cursor: 'initial'
+            }
         }
 
         // Create toastify payload
         const payload = {
             text: message,
-            duration: duration,
+            duration,
             escapeMarkup: false,
-            close: close,
+            close,
             gravity: 'top',
             position: 'center',
             stopOnFocus: 'true',
-            style: types[type],
+            style: types[type]
         }
 
         // Turn payload into JSON so we can pass it through a raw script element
@@ -248,27 +248,27 @@ getWindow().opinionsHandlingEditor = {
      * (if you want to add more, remember to add matching HTML inputs too)
      */
     handlingKeys: [
-        'accel',/*      */'topSpeed',
-        'brake',/*      */'reverse',
-        'aeroFactor',/* */'dampening',
-        'drag',/*       */'jerk',
-        'rockFactor',/* */'rollResistance',
-        'slipBase',/*   */'slipMod',
-        'maxSteer',/*   */'steerSpeed',
-        'steerAccel',/* */'steerInterval',
-        'mass',
+        'accel', /*      */'topSpeed',
+        'brake', /*      */'reverse',
+        'aeroFactor', /* */'dampening',
+        'drag', /*       */'jerk',
+        'rockFactor', /* */'rollResistance',
+        'slipBase', /*   */'slipMod',
+        'maxSteer', /*   */'steerSpeed',
+        'steerAccel', /* */'steerInterval',
+        'mass'
     ],
 
     /**
      * Starts handling editor (main)
      */
-    startHandlingEditor() {
+    startHandlingEditor () {
         this.makeToast('You can open the handling editor by pressing the cog in the <b>top left</b> corner.', 'default', 25000)
         this.makeToast('🔧 Now playing with Opinion\'s handling editor. Have fun out there :)', 'info', 12000)
 
         // Window toggled and position
-        let windowX = '4.5rem'
-        let windowY = '2rem'
+        const windowX = '4.5rem'
+        const windowY = '2rem'
         let windowActiveClass = ''
         if (localStorage.getItem('x-handling-editor-active')) {
             windowActiveClass = 'active'
@@ -506,16 +506,16 @@ input[type=number] {
             self.resetHandling()
         })
     },
-    updateHandling(handlingKey, value) {
+    updateHandling (handlingKey, value) {
         const handlingMetrics = getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
     },
-    resetHandling() {
+    resetHandling () {
         if (typeof this.settings.defaultHandling === 'undefined') {
             this.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
-            return;
+            return
         }
-        for (var i = 0; i < this.handlingKeys.length; i++) {
+        for (let i = 0; i < this.handlingKeys.length; i++) {
             const handlingKey = this.handlingKeys[i]
 
             // Resetting handling for the current key
@@ -526,12 +526,12 @@ input[type=number] {
         // Loading new values to UI
         this.loadHandling(false)
     },
-    loadHandling(firstRun = false) {
+    loadHandling (firstRun = false) {
         if (firstRun) {
             this.settings.defaultHandling = {}
         }
 
-        for (var i = 0; i < this.handlingKeys.length; i++) {
+        for (let i = 0; i < this.handlingKeys.length; i++) {
             const handlingKey = this.handlingKeys[i]
 
             // Getting corresponding input and setting initial value
@@ -546,25 +546,25 @@ input[type=number] {
                 this.settings.defaultHandling[handlingKey] = initialValue
 
                 // Creating event listener
-                var self = this;
+                var self = this
                 inputElement.addEventListener('change', () => {
                     self.updateHandling(handlingKey, inputElement.value)
                 })
             }
         }
     },
-    getHandlingEditorOuterElement() {
+    getHandlingEditorOuterElement () {
         return document.getElementById('handling-editor-outer')
     },
-    getHandlingEditorToggleElement() {
+    getHandlingEditorToggleElement () {
         return document.getElementById('handling-editor-toggle')
     },
-    getHandlingEditorElement() {
+    getHandlingEditorElement () {
         return document.getElementById('handling-editor')
     },
-    dragElement(element) {
-        var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const headerElement = document.getElementById(element.id + "-header")
+    dragElement (element) {
+        let pos1 = 0; let pos2 = 0; let pos3 = 0; let pos4 = 0
+        const headerElement = document.getElementById(element.id + '-header')
         if (headerElement) {
             // if present, the header is where you move the DIV from:
             headerElement.onmousedown = dragMouseDown
@@ -573,38 +573,38 @@ input[type=number] {
             element.onmousedown = dragMouseDown
         }
 
-        function dragMouseDown(e) {
-            e = e || getWindow().event;
-            e.preventDefault();
+        function dragMouseDown (e) {
+            e = e || getWindow().event
+            e.preventDefault()
             // get the mouse cursor position at startup:
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
+            pos3 = e.clientX
+            pos4 = e.clientY
+            document.onmouseup = closeDragElement
             // call a function whenever the cursor moves:
-            document.onmousemove = elementDrag;
+            document.onmousemove = elementDrag
 
             if (headerElement) {
                 headerElement.classList.add('grabbing')
             }
         }
 
-        function elementDrag(e) {
-            e = e || getWindow().event;
-            e.preventDefault();
+        function elementDrag (e) {
+            e = e || getWindow().event
+            e.preventDefault()
             // calculate the new cursor position:
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
+            pos1 = pos3 - e.clientX
+            pos2 = pos4 - e.clientY
+            pos3 = e.clientX
+            pos4 = e.clientY
             // set the element's new position:
-            element.style.top = (element.offsetTop - pos2) + "px";
-            element.style.left = (element.offsetLeft - pos1) + "px";
+            element.style.top = (element.offsetTop - pos2) + 'px'
+            element.style.left = (element.offsetLeft - pos1) + 'px'
         }
 
-        function closeDragElement() {
+        function closeDragElement () {
             // stop moving when mouse button is released:
-            document.onmouseup = null;
-            document.onmousemove = null;
+            document.onmouseup = null
+            document.onmousemove = null
 
             if (headerElement) {
                 headerElement.classList.remove('grabbing')
@@ -614,7 +614,7 @@ input[type=number] {
 };
 
 (function () {
-    'use strict';
+    'use strict'
     addEventListener('beforescriptexecute', (e) => {
         const handlingEditor = getHandlingEditor()
         if (e.target.src === handlingEditor.settings.originalGameScript) {
@@ -622,5 +622,5 @@ input[type=number] {
             e.preventDefault()
             handlingEditor.initialize()
         }
-    });
-})();
+    })
+})()
