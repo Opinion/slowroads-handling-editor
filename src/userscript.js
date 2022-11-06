@@ -66,13 +66,11 @@ const WindowInteraction = {
     },
 }
 
-const HandlingEditor = {
-    /* Include 'Core' */
-    log: Core.log,
-    settings: Core.settings,
-
+const DocumentInteraction = {
     /**
      * Append a <script> element to <head>
+     *
+     * @param {string} url URL for 'src' attribute
      */
     appendScript(src) {
         const element = document.createElement('script')
@@ -83,6 +81,8 @@ const HandlingEditor = {
 
     /**
      * Append a <link> element to <head>
+     *
+     * @param {string} url URL for rel attribute
      */
     appendStyle(src) {
         const element = document.createElement('link')
@@ -97,6 +97,8 @@ const HandlingEditor = {
      *
      * Useful because we can de-elevate (is that a word?) code and let it run from the page.
      * Code will NOT run with the elevated permissions of the userscript.
+     *
+     * @param {string} code Javascript code
      */
     appendRawScript(code) {
         const element = document.createElement('script')
@@ -104,6 +106,17 @@ const HandlingEditor = {
         document.body.append(element)
         this.log('Appended raw script', { element, code })
     },
+}
+
+const HandlingEditor = {
+    /* Include 'Core' */
+    log: Core.log,
+    settings: Core.settings,
+
+    /* Include 'DocumentInteraction' */
+    appendScript: DocumentInteraction.appendScript,
+    appendStyle: DocumentInteraction.appendStyle,
+    appendRawScript: DocumentInteraction.appendRawScript,
 
     /**
      * Initialize scripts and dependencies
