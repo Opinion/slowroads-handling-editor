@@ -68,6 +68,15 @@ const WindowInteraction = {
 
 const DocumentInteraction = {
     /**
+     * Get game version
+     *
+     * @returns {string|undefined}
+     */
+    getGameVersion() {
+        return document.getElementById('splash-version')?.innerText
+    },
+
+    /**
      * Append a <script> element to <head>
      *
      * @param {string} url URL for 'src' attribute
@@ -185,6 +194,314 @@ const Toastmaker = {
     },
 }
 
+/**
+ * Condition Checker
+ *
+ * ## Behavior
+ *  - Condition state is stored in 'condition.state'.
+ *  - When a condition fails, the loop will break and the condition will be checked again next time.
+ *  - When a condition passes, 'condition.state.passed' will be set to 'true'.
+ *    - Next loop, the condition will not be checked through 'condition.passes' because 'condition.state.passed' is set
+ *      to 'true'.
+ *    - Even if 'condition.state.passed' is 'true', 'condition.onPass' will be used ('condition.onPass' behaves like
+ *      normal).
+ *    - This descision might seem a little weird. It is needed to avoid an already-passing conditon to fail later.
+ *    - Example; Checking the game version requires a specific HTML element. The element is removed when you 'begin' the
+ *      game.
+ *    - TL;DR When a condition has passed, it will never fail during later checks.
+ *
+ *
+ *
+ * ## Condition structure
+ *  - condition.name        | {string} (Required) Name of the condition.
+ *  - condition.passes      | {function} (Required) Requirement to pass the condition.
+ *  - condition.beforeCheck | {object|null|undefined} (Optional) Properties documented below.
+ *  - condition.onPass      | {object|null|undefined} (Optional) Properties documented below.
+ *  - condition.onFail      | {object|null|undefined} (Optional) Properties documented below.
+ *  - condition.state       | {object|null|undefined} (Automatic) Properties documented below.
+ *
+ *
+ * ### Properties for 'beforeCheck', 'onPass' and 'onFail'
+ *  - message        | {string|null|undefined} Message to be logged.
+ *  - messageOnce    | {boolean|null|undefined} Do you want the message to be logged once? Defaults to 'true'.
+ *  - run            | {function|null|undefined} A function you want to run.
+ *  - runOnce        | {boolean|null|undefined} Do you want the run function to execute once? Defaults to 'true'.
+ *  - throwException | {boolean|null|undefined} Do you want to exit the script at this point (after executing 'run'
+ *                                              function)? Defaults to 'false'.
+ *
+ * Be careful with how you set up the 'run' function. In most cases you will want 'runOnce' to be 'true'.
+ *
+ * Remember: Conditions will run again if one fails. 'beforeCheck', 'onPass' and 'onFail' can happen many times before
+ *           all conditions have passed.
+ *
+ *
+ * ### Properties for 'state' (handled automatically)
+ *  - passed             | {boolean|null|undefined} Has the condition passed once?
+ *  - beforeCheckMessage | {boolean|null|undefined} Has 'beforeCheck.message' been logged once?
+ *  - beforeCheckRun     | {boolean|null|undefined} Has 'beforeCheck.run' been executed once?
+ *  - onPassMessage      | {boolean|null|undefined} Has 'onPass.message' been logged once?
+ *  - onPassRun          | {boolean|null|undefined} Has 'onPass.run' been executed once?
+ *  - onFailMessage      | {boolean|null|undefined} Has 'onFail.message' been logged once?
+ *  - onFailRun          | {boolean|null|undefined} Has 'onFail.run' been executed once?
+ *
+ * Note: 'condition.state' is handled automatically. please don't define anything here.
+ *
+ *
+ *
+ * ## Full object example (with state)
+ * ```
+ *  const condition = {
+ *      name: 'Example condition',
+ *      passes: () => typeof 'Hello' === 'string',
+ *      beforeCheck: {
+ *          message: 'Logged before checking the condition.',
+ *          messageOnce: true,
+ *          run: () => console.log('I was executed at \'beforeCheck\'.'),
+ *          runOnce: true,
+ *          throwException: false,
+ *      },
+ *      onPass: {
+ *          message: 'Logged after passing the condition.',
+ *          messageOnce: true,
+ *          run: () => console.log('I was executed at \'onPass\'.'),
+ *          runOnce: true,
+ *          throwException: false,
+ *      },
+ *      onFail: {
+ *          message: 'Logged after failing the condition.',
+ *          messageOnce: true,
+ *          run: () => console.log('I was executed at \'onFail\'.'),
+ *          runOnce: true,
+ *          throwException: true,
+ *      },
+ *      state: {
+ *          passed: false,
+ *          beforeCheckMessage: false,
+ *          beforeCheckRun: false,
+ *          onPassMessage: false,
+ *          onPassRun: false,
+ *          onFailMessage: false,
+ *          onFailRun: false,
+ *      },
+ *  };
+ * ```
+ */
+const ConditionChecker = {
+    conditions: [
+        {
+            name: 'Toastify.js',
+            passes: () => typeof WindowInteraction.getToastify() === 'function',
+            beforeCheck: {
+                message: 'Waiting for Toastify.js to finish loading...',
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'Dependency successfully loaded.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: 'Dependency has not loaded yet.',
+                messageOnce: false,
+            },
+        },
+        {
+            name: 'Game version',
+            passes: () => DocumentInteraction.getGameVersion() === Core.settings.supportedVersion,
+            beforeCheck: {
+                message: `Required game version: '${Core.settings.supportedVersion}'.`,
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'The game version is supported.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: `Game version '${DocumentInteraction.getGameVersion()}' is not supported. Please check if the handling editor has a new release available.`,
+                messageOnce: true,
+                run: () => Toastmaker.makeToast('<b><a style="color: #9bb5ff" href="https://github.com/Opinion/slowroads-handling-editor">Opinion\'s Handling Editor</a></b></br>Game version is not supported. Please check if the handling editor has a new release available.', 'error', 100000),
+                runOnce: true,
+                throwException: true,
+            },
+        },
+        {
+            name: 'Game start',
+            passes: () => WindowInteraction.getExposedI()?.current?.firstFrame === true,
+            beforeCheck: {
+                message: 'Waiting for the game to start (press \'begin\')...',
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'The game has started.',
+                messageOnce: true,
+            },
+        },
+        {
+            name: 'Vehicle spawn',
+            passes: () => typeof WindowInteraction.getExposedI()?.current?.vehicleController !== 'undefined',
+            beforeCheck: {
+                message: 'Waiting for the vehicle to spawn...',
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'Found \'vehicleController\'.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
+                messageOnce: false,
+            },
+        },
+    ],
+
+    internal: {
+        /**
+         * Internal logger for conditions
+         *
+         * @param {object} condition
+         * @param {...any} args
+         */
+        log(condition, ...args) {
+            Core.log(`[Condition: ${condition.name}]`, ...args)
+        },
+
+        /**
+         * Handle condition sections; 'beforeCheck', 'onPass' and 'onFail'
+         *
+         * Default values described in parent-JSDoc are marked with inline comments.
+         *
+         * Steps in order:
+         * 1. Log message if allowed
+         * 2. Run function if allowed
+         * 3. Throw exception if allowed
+         *
+         * @param {object} condition Condition object
+         * @param {string} section Section name
+         */
+        handleSection(condition, section) {
+            // Validate section type
+            if (!['beforeCheck', 'onPass', 'onFail'].includes(section)) {
+                throw Error(`Section '${section}' is not valid.`)
+            }
+
+            // Get state
+            const stateMessageKey = `${section}Message`
+            const stateRunKey = `${section}Run`
+            const messageHasAlreadyBeenLogged = condition.state[stateMessageKey] === true
+            const runHasAlreadyBeenExecuted = condition.state[stateRunKey] === true
+
+            // Get section settings
+            const sectionSettings = condition[section]
+            const messageCanOnlyBeLoggedOnce = sectionSettings.messageOnce !== false // Note: Defaults to 'true' as described in JSDoc
+            const runCanOnlyBeExecutedOnce = sectionSettings.messageOnce !== false // Note: Defaults to 'true' as described in JSDoc
+
+            // Check if we are allowed to log a message
+            const messageIsAString = typeof sectionSettings.message === 'string'
+            const messageCanBeLogged = messageHasAlreadyBeenLogged
+                ? !messageCanOnlyBeLoggedOnce
+                : true
+            if (messageIsAString && messageCanBeLogged) {
+                // Log the message
+                this.log(condition, sectionSettings.message)
+
+                // Save to state
+                condition.state[stateMessageKey] = true
+            }
+
+            // Check if we are allowed to run a function
+            const runIsAFunction = typeof sectionSettings.run === 'function'
+            const runCanBeExecuted = runHasAlreadyBeenExecuted
+                ? !runCanOnlyBeExecutedOnce
+                : true
+            if (runIsAFunction && runCanBeExecuted) {
+                // Run the function
+                sectionSettings.run()
+
+                // Save to state
+                condition.state[stateRunKey] = true
+            }
+
+            // Check if we are allowed to throw an exception
+            if (sectionSettings.throwException === true) {
+                // Note: Defaults to 'false' as described in JSDoc
+                this.log(
+                    condition,
+                    'Halting script exectution because \'throwException\' was true.',
+                    { conditionName: condition.name, condition, sectionName: section, section: sectionSettings },
+                )
+                throw Error(`This exception was thrown by a condition in order to halt script execution. Condition name: '${condition.name}', Section: '${section}'.`)
+            }
+        },
+
+        /**
+         * Check a condition
+         *
+         * Triggers 'beforeCheck', 'onPass' and 'onFail' when needed.
+         *
+         * @param {*} condition
+         */
+        checkCondition(condition) {
+            // Make sure 'beforeCheck', 'onPass' and 'onFail' is an object
+            if (typeof condition.beforeCheck !== 'object') {
+                condition.beforeCheck = {}
+            }
+            if (typeof condition.onPass !== 'object') {
+                condition.onPass = {}
+            }
+            if (typeof condition.onFail !== 'object') {
+                condition.onFail = {}
+            }
+
+            // Make sure state is an object
+            if (typeof condition.state !== 'object') {
+                condition.state = {}
+            }
+
+            // Get state
+            const conditionHasAlreadyPassed = condition.state.passed === true
+
+            // Section :: 'beforeCheck'
+            this.handleSection(condition, 'beforeCheck')
+
+            // Checking condition
+            if (conditionHasAlreadyPassed || condition.passes()) {
+                // Save to state
+                condition.state.passed = true // Important -- Condition will always pass on upcoming checks
+
+                // Section :: 'onPass'
+                this.handleSection(condition, 'onPass')
+
+                // Output: The condition passed
+                return true
+            } else {
+                // Section :: 'onFail'
+                this.handleSection(condition, 'onFail')
+
+                // Output: The condition failed
+                return false
+            }
+        },
+    },
+
+    /**
+     * Check all conditions
+     *
+     * @returns {boolean}
+     */
+    check() {
+        const conditions = this.conditions
+        for (let i = 0; i < conditions.length; i++) {
+            const condition = conditions[i]
+            if (!this.internal.checkCondition(condition)) {
+                // Output: A condition has failed
+                return false
+            }
+        }
+
+        // Output: All conditions have passed
+        return true
+    },
+}
+
 const HandlingEditor = {
     /* Include 'Core' */
     log: Core.log,
@@ -197,6 +514,9 @@ const HandlingEditor = {
 
     /* Include 'Toastmaker' */
     toastmaker: Toastmaker,
+
+    /* Include 'ConditionChecker' */
+    conditionChecker: ConditionChecker,
 
     /**
      * Initialize scripts and dependencies
@@ -211,91 +531,26 @@ const HandlingEditor = {
         this.appendScript('https://cdn.jsdelivr.net/npm/toastify-js')
         this.appendStyle('https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css')
 
-        // Waiting until the game has started and dependencies are loaded
+        // Waiting until dependencies have loaded and the game has started
         this.log('Before we start the handling editor we need to wait for some conditions...')
-        this.settings.pleaseWait = setInterval(this.waitUntilReady, 500)
-    },
-
-    /**
-     * Wait conditions
-     *
-     * ## Condition structure
-     *  - condition.name           : Required : string. Name of the condition.
-     *  - condition.passes         : Required : function. Requirement to pass the condition.
-     *  - condition.checkMessage   : Optional : string, null or undefined. Message before checking the condition.
-     *  - condition.successMessage : Optional : string, null or undefined. Message when passing the condition.
-     *  - condition.failedMessage  : Optional : string, null or undefined. Message when the condition doesn't pass.
-     */
-    waitConditions: [
-        {
-            name: 'Toastify.js',
-            passes: () => typeof WindowInteraction.getToastify() === 'function',
-            checkMessage: 'Waiting for Toastify.js to finish loading...',
-            successMessage: 'Toastify.js successfully loaded!',
-        },
-        {
-            name: 'Game start',
-            passes: () => WindowInteraction.getExposedI()?.current?.firstFrame === true,
-            checkMessage: 'Waiting for the game to start (press \'begin\')...',
-            successMessage: 'Game has started!',
-        },
-        {
-            name: 'Vehicle spawn',
-            passes: () => typeof WindowInteraction.getExposedI()?.current?.vehicleController !== 'undefined',
-            failedMessage: 'Couldn\'t find \'vehicleController\'. This usually takes a few seconds.',
-            successMessage: 'Found \'vehicleController\'.',
-        },
-    ],
-
-    /**
-     * Timer function which starts the handling editor when all conditions have passed
-     *
-     * Note: Runs in a 'setInterval' timer.
-     */
-    waitUntilReady() {
-        const self = HandlingEditor
-
-        // Running conditions
-        let failedCondition = false
-        const conditions = self.waitConditions
-        for (let i = 0; i < conditions.length; i++) {
-            const condition = conditions[i]
-            const logPrefix = `[Wait condition: ${condition.name}]`
-
-            // Checking 'checkMessage'
-            if (condition.checkMessage) {
-                self.log(logPrefix, condition.checkMessage)
-                condition.checkMessage = null
-            }
-
-            // Checking if the condition passes
-            if (condition.passes() === false) {
-                // Checking 'failedMessage'
-                if (condition.failedMessage) {
-                    // We don't clear failed message because we want to make the user aware that something isn't quite right
-                    self.log(logPrefix, condition.failedMessage)
+        const self = this
+        this.settings.pleaseWait = setInterval(() => {
+            // Checking conditions
+            try {
+                if (!self.conditionChecker.check()) {
+                    return
                 }
-
-                failedCondition = true
-                break
+            } catch (exception) {
+                self.log('Caught an exception in ConditionChecker. Stopping loop and halting the script.', exception)
+                clearInterval(self.settings.pleaseWait) // Important -- stops timer
+                return // Important -- halts script
             }
 
-            // Checking 'successMessage'
-            if (condition.successMessage) {
-                self.log(logPrefix, condition.successMessage)
-                condition.successMessage = null
-            }
-        }
-
-        // Exiting if a condition failed
-        if (failedCondition) {
-            return
-        }
-
-        // Stopping timer and starting handling editor
-        self.log('Passed all conditions. Starting handling editor!')
-        clearInterval(self.settings.pleaseWait)
-        self.startHandlingEditor()
+            // Stopping timer and starting handling editor
+            self.log('Passed all conditions. Starting handling editor!')
+            clearInterval(self.settings.pleaseWait)
+            self.startHandlingEditor()
+        }, 100)
     },
 
     /**
