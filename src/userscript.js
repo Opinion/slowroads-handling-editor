@@ -76,7 +76,7 @@ const DocumentInteraction = {
         const element = document.createElement('script')
         element.src = src
         document.head.append(element)
-        this.log('Appended script', { element, src })
+        Core.log('Appended script', { element, src })
     },
 
     /**
@@ -89,7 +89,7 @@ const DocumentInteraction = {
         element.href = src
         element.rel = 'stylesheet'
         document.head.append(element)
-        this.log('Appended style', { element, src })
+        Core.log('Appended style', { element, src })
     },
 
     /**
@@ -104,7 +104,7 @@ const DocumentInteraction = {
         const element = document.createElement('script')
         element.innerHTML = code
         document.body.append(element)
-        this.log('Appended raw script', { element, code })
+        Core.log('Appended raw script', { element, code })
     },
 }
 
