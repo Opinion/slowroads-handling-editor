@@ -131,6 +131,130 @@ const DocumentInteraction = {
 }
 
 /**
+ * Dependency Manager
+ *
+ * ## Brief overview
+ *  - Loaded state is stored in 'dependency.loaded' as a boolean.
+ *  - When a dependency has loaded, it will not load again on subsequent requests.
+ *  - Dependencies are stored in object keys so we can easily load necessary depedencies out-of-order.
+ *
+ * ## Dependency structure
+ *  - dependency.name     | {string} (Required) Name of the dependency (used in logs)
+ *  - dependency.js       | {array|string[]|null|undefined} (Optional) Array of URLs to javascript files
+ *  - dependency.css      | {array|string[]|null|undefined} (Optional) Array of URLs to CSS files
+ *  - dependency.isLoaded | {function|null|undefined} (Optional) A function to check if the dependency has loaded (for use outside the Dependency Manager)
+ *  - dependency.loaded   | {boolean|null|undefined} (Automatic) Has this dependency been loaded yet?
+ *
+ * Note: 'dependency.loaded' is handled automatically. Please don't touch it.
+ */
+const DependencyManager = {
+    dependencies: {
+        toastify: {
+            name: 'Toastify.js',
+            js: [
+                'https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js',
+            ],
+            css: [
+                'https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css',
+            ],
+            isLoaded: () => typeof WindowInteraction.getToastify() === 'function',
+        },
+        modifiedGameScript: {
+            name: 'Modified game script',
+            js: [
+                Core.settings.modifiedGameScript,
+            ],
+            isLoaded: () => typeof WindowInteraction.getExposedI() === 'function',
+        },
+    },
+
+    /**
+     * Custom logger for dependencies
+     *
+     * @param {object} dependency
+     * @param  {...any} args
+     */
+    log(dependency, ...args) {
+        Core.log(`[Dependency: ${dependency.name}]`, ...args)
+    },
+
+    /**
+     * Load a dependency
+     *
+     * Appends necessary <script> and <link> elements to <head>.
+     * When a dependency has loaded it will not load again.
+     *
+     * @param {object} dependency
+     */
+    loadDependency(dependency) {
+        if (typeof dependency !== 'object') {
+            throw Error('Dependency must be an object.')
+        }
+
+        // Checking state
+        if (dependency.loaded === true) {
+            this.log(dependency, 'Already loaded. Ignoring.')
+            return
+        }
+
+        this.log(dependency, 'Loading dependency...', { dependency: dependency })
+
+        // Append javascript URLs
+        if (Array.isArray(dependency.js) && dependency.js.length) {
+            for (let i = 0; i < dependency.js.length; i++) {
+                const url = dependency.js[i]
+                DocumentInteraction.appendScript(url)
+            }
+        }
+
+        // Append CSS URLs
+        if (Array.isArray(dependency.css) && dependency.css.length) {
+            for (let i = 0; i < dependency.css.length; i++) {
+                const url = dependency.css[i]
+                DocumentInteraction.appendStyle(url)
+            }
+        }
+
+        // Saving state
+        dependency.loaded = true
+    },
+
+    /**
+     * Load dependencies
+     *
+     * @param {array|object[]|null} dependencies Custom dependencies. Use 'null' to use configured dependencies.
+     */
+    load(dependencies = null) {
+        // -- Attempt to use dependencies from parameter
+
+        // Check if we can use dependecies from parameter
+        if (Array.isArray(dependencies) && length) {
+            // Load dependencies (from an array)
+            for (let i = 0; i < dependencies.length; i++) {
+                const dependency = dependencies[i]
+                this.loadDependency(dependency)
+            }
+            return // -- Important
+        }
+
+        // -- Fallback to configured dependencies
+
+        // Make sure dependencies are stored in an object
+        if (typeof this.dependencies !== 'object') {
+            throw Error('Expected \'this.dependencies\' to be an object.')
+        }
+
+        // Load dependencies
+        for (const key in this.dependencies) {
+            if (Object.hasOwnProperty.call(this.dependencies, key)) {
+                const dependency = this.dependencies[key]
+                this.loadDependency(dependency)
+            }
+        }
+    },
+}
+
+/**
  * Toastmaker
  *
  * It makes toasts (:
@@ -303,7 +427,7 @@ const ConditionChecker = {
     conditions: [
         {
             name: 'Toastify.js',
-            passes: () => typeof WindowInteraction.getToastify() === 'function',
+            passes: DependencyManager.dependencies.toastify.isLoaded,
             beforeCheck: {
                 message: 'Waiting for Toastify.js to finish loading...',
                 messageOnce: true,
@@ -555,15 +679,11 @@ const HandlingEditor = {
     initialize() {
         this.log('Initializing...')
 
-        // Append modifified game script
-        this.appendScript(this.settings.modifiedGameScript)
+        // Load dependencies
+        DependencyManager.load()
 
-        // Append Toastify.js : https://apvarun.github.io/toastify-js
-        this.appendScript('https://cdn.jsdelivr.net/npm/toastify-js')
-        this.appendStyle('https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css')
-
-        // Waiting until dependencies have loaded and the game has started
-        this.log('Before we start the handling editor we need to wait for some conditions...')
+        // Run ConditionChecker until we can start the Handling Editor
+        this.log('Before we start the Handling Editor, we need to wait for some conditions...')
         const self = this
         this.settings.pleaseWait = setInterval(() => {
             // Checking conditions
