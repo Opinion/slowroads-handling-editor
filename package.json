@@ -1,0 +1,24 @@
+{
+  "name": "slowroads-handling-editor",
+  "version": "1.2.0",
+  "description": "Opinion's Handling Editor is a mod for slowroads.io which gives you access to a simple handling editor. Get more out of your vehicle by customizing it on the fly.",
+  "main": "src/userscript.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Opinion/slowroads-handling-editor.git"
+  },
+  "author": "Opinion",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Opinion/slowroads-handling-editor/issues"
+  },
+  "homepage": "https://github.com/Opinion/slowroads-handling-editor#readme",
+  "devDependencies": {
+    "eslint": "^8.27.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.5.0",
+    "eslint-plugin-promise": "^6.1.1"
+  }
+}
