@@ -27,8 +27,8 @@ const Core = {
      */
     settings: {
         supportedVersion: '1.0.1',
-        originalGameScript: 'https://slowroads.io/static/js/main.e7a33c55.chunk.js',
-        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.e7a33c55.chunk.js',
+        originalGameScript: 'https://slowroads.io/static/js/main.9fb6165b.chunk.js',
+        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.2/dist/main.modified.9fb6165b.chunk.js',
     },
 }
 
