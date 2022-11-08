@@ -129,13 +129,6 @@ const DocumentInteraction = {
     getGameCanvasElement() {
         return document.querySelector('#game-main > canvas.render-canvas')
     },
-
-    /**
-     * Attempt to put focus on the game's canvas
-     */
-    putFocusOnGameCanvas() {
-        this.getGameCanvasElement()?.focus()
-    },
 }
 
 /**
@@ -729,7 +722,6 @@ const HandlingEditor = {
     appendStyle: DocumentInteraction.appendStyle,
     appendRawScript: DocumentInteraction.appendRawScript,
     getGameCanvasElement: DocumentInteraction.getGameCanvasElement,
-    putFocusOnGameCanvas: DocumentInteraction.putFocusOnGameCanvas,
 
     /* Include 'Toastmaker' */
     toastmaker: Toastmaker,
@@ -1052,11 +1044,44 @@ const HandlingEditor = {
             self.resetHandling()
         })
     },
+
+    /**
+     * Attempt to put focus on the game's canvas
+     */
+    putFocusOnGameCanvas() {
+        function focus() {
+            DocumentInteraction.getGameCanvasElement()?.focus()
+        }
+
+        // Get active element
+        const activeElement = document.activeElement
+
+        if (activeElement?.tagName === 'INPUT') {
+            // -- Active element is an input
+
+            // Only focus if the active element is the same element that was recently updated.
+            // This allows you to click on another input (triggers 'change' event) without giving focus to the game.
+            // We assume; if you click another input, you want to keep editing and not play right away.
+            if (activeElement === this.recentlyUpdatedInputElement) {
+                focus()
+            }
+        } else {
+            // -- Active element is anything else
+
+            // Always focus
+            focus()
+        }
+
+        // Resetting
+        this.recentlyUpdatedInputElement = null
+    },
+
     updateHandling(handlingKey, value) {
         const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
         this.putFocusOnGameCanvas()
     },
+
     resetHandling() {
         if (typeof this.settings.defaultHandling === 'undefined') {
             this.toastmaker.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
@@ -1074,6 +1099,7 @@ const HandlingEditor = {
         this.loadHandling(false)
         this.putFocusOnGameCanvas()
     },
+
     loadHandling(firstRun = false) {
         if (firstRun) {
             this.settings.defaultHandling = {}
@@ -1096,6 +1122,7 @@ const HandlingEditor = {
                 // Creating event listener
                 const self = this
                 inputElement.addEventListener('change', () => {
+                    self.recentlyUpdatedInputElement = inputElement
                     self.updateHandling(handlingKey, inputElement.value)
 
                     // Display saved text in UI
@@ -1106,6 +1133,7 @@ const HandlingEditor = {
             }
         }
     },
+
     dragElement(element) {
         let pos1 = 0; let pos2 = 0; let pos3 = 0; let pos4 = 0
         const headerElement = document.getElementById(element.id + '-header')
