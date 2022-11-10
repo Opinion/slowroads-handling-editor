@@ -2990,6 +2990,7 @@
       }
     };
     const Xi = '1.0.2';
+    window.exposedVersion = window.exposedVersion ?? Xi //:::MODIFIED
     let Ji = localStorage.getItem('seen-version');
     const qi = null !== Ji && Ji !== Xi,
     Ki = [
