@@ -17886,6 +17886,7 @@
         if (null === e.current || null === t.current) return;
         if (new ResizeObserver((t=>{
           i.current && e.current && i.current.setSize(e.current.offsetWidth, e.current.offsetHeight)
+          window.exposedI = window.exposedI ?? i //:::MODIFIED
         })).observe(e.current), !i.current && g) {
           if (m) return;
           i.current = new ql(t.current, e.current, c, l),
