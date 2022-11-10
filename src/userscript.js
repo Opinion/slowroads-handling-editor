@@ -18,7 +18,7 @@ const Core = {
         originalGameScriptPattern: /https?:\/\/slowroads\.io\/static\/js\/main\.([a-z0-9]+)\.chunk\.js$/gm,
         originalGameScript: null,
         modifiedGameScript: {
-            prefix: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor/dist/main.modified.',
+            prefix: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor@userscript-v1.3/dist/main.modified.',
             suffix: '.chunk.js',
             identifier: null,
             get() {
