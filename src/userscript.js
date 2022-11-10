@@ -14,7 +14,7 @@
 
 const Core = {
     settings: {
-        supportedVersion: '1.0.1',
+        supportedVersion: '1.0.2',
         originalGameScriptPattern: /https?:\/\/slowroads\.io\/static\/js\/main\.([a-z0-9]+)\.chunk\.js$/gm,
         originalGameScript: null,
         modifiedGameScript: {
