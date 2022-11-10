@@ -69,6 +69,18 @@ const WindowInteraction = {
     getExposedI() {
         return this.getWindow()?.exposedI
     },
+
+    /**
+     * Get 'exposedVersion' through window
+     *
+     * @returns {string|null}
+     */
+    getExposedVersion() {
+        const version = this.getWindow()?.exposedVersion
+        return typeof version === 'string'
+            ? version
+            : null
+    },
 }
 
 const DocumentInteraction = {
@@ -110,15 +122,6 @@ const DocumentInteraction = {
         element.innerHTML = code
         document.body.append(element)
         Core.log('Appended raw script', { element, code })
-    },
-
-    /**
-     * Get game version
-     *
-     * @returns {string|undefined}
-     */
-    getGameVersion() {
-        return document.getElementById('splash-version')?.innerText
     },
 
     /**
@@ -516,7 +519,7 @@ As a failsafe, we loaded the original game script so you can enjoy the unmodded 
         },
         {
             name: 'Game version',
-            passes: () => DocumentInteraction.getGameVersion() === Core.settings.supportedVersion,
+            passes: () => WindowInteraction.getExposedVersion() === Core.settings.supportedVersion,
             beforeCheck: {
                 message: `Required game version: '${Core.settings.supportedVersion}'.`,
                 messageOnce: true,
@@ -526,7 +529,7 @@ As a failsafe, we loaded the original game script so you can enjoy the unmodded 
                 messageOnce: true,
             },
             onFail: {
-                message: `Game version '${DocumentInteraction.getGameVersion()}' is not supported. Please check if the Handling Editor has a new release available.`,
+                message: `Game version '${WindowInteraction.getExposedVersion()}' is not supported. Please check if the Handling Editor has a new release available.`,
                 messageOnce: true,
                 run: () => Toastmaker.makeToast('<b><a style="color: #9bb5ff" href="https://github.com/Opinion/slowroads-handling-editor">Opinion\'s Handling Editor</a></b></br>Game version is not supported. Please check if the Handling Editor has a new release available.', 'error', 100000),
                 runOnce: true,
