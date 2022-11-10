@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Opinion's Handling Editor for slowroads.io
 // @namespace    https://github.com/Opinion/slowroads-handling-editor
-// @version      1.2
-// @description  This mod adds a handling editor for slowroads.io. Supports game version v1.0.1 on script 'main.e7a33c55.chunk.js'
+// @version      1.3
+// @description  This mod adds a handling editor for slowroads.io. Supports game version v1.0.2.
 // @author       Opinion
 // @match        https://slowroads.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=slowroads.io
@@ -13,6 +13,20 @@
 /* globals unsafeWindow, window */
 
 const Core = {
+    settings: {
+        supportedVersion: '1.0.2',
+        originalGameScriptPattern: /https?:\/\/slowroads\.io\/static\/js\/main\.([a-z0-9]+)\.chunk\.js$/gm,
+        originalGameScript: null,
+        modifiedGameScript: {
+            prefix: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor/dist/main.modified.',
+            suffix: '.chunk.js',
+            identifier: null,
+            get() {
+                return `${this.prefix}${this.identifier}${this.suffix}`
+            },
+        },
+    },
+
     /**
      * Custom logger
      *
@@ -20,15 +34,6 @@ const Core = {
      */
     log(...args) {
         console.log('[🔧]', '[OPINION]', ...args)
-    },
-
-    /**
-     * Settings
-     */
-    settings: {
-        supportedVersion: '1.0.1',
-        originalGameScript: 'https://slowroads.io/static/js/main.9fb6165b.chunk.js',
-        modifiedGameScript: 'https://cdn.jsdelivr.net/gh/Opinion/slowroads-handling-editor/dist/main.modified.9fb6165b.chunk.js',
     },
 }
 
@@ -63,6 +68,18 @@ const WindowInteraction = {
      */
     getExposedI() {
         return this.getWindow()?.exposedI
+    },
+
+    /**
+     * Get 'exposedVersion' through window
+     *
+     * @returns {string|null}
+     */
+    getExposedVersion() {
+        const version = this.getWindow()?.exposedVersion
+        return typeof version === 'string'
+            ? version
+            : null
     },
 }
 
@@ -108,15 +125,6 @@ const DocumentInteraction = {
     },
 
     /**
-     * Get game version
-     *
-     * @returns {string|undefined}
-     */
-    getGameVersion() {
-        return document.getElementById('splash-version')?.innerText
-    },
-
-    /**
      * Get game's canvas element
      *
      * @returns {HTMLElement|null}
@@ -124,12 +132,167 @@ const DocumentInteraction = {
     getGameCanvasElement() {
         return document.querySelector('#game-main > canvas.render-canvas')
     },
+}
+
+/**
+ * Dependency Manager
+ *
+ * ## Brief overview
+ *  - Loaded state is stored in 'dependency.loaded' as a boolean.
+ *  - When a dependency has loaded, it will not load again on subsequent requests.
+ *  - Dependencies are stored in object keys so we can easily load necessary depedencies out-of-order.
+ *  - If a javascript or css dependency is a function, it will be executed.
+ *    - If the output of the function is a string, the string will be loaded as a dependency.
+ *
+ * ## Dependency structure
+ *  - dependency.name     | {string} (Required) Name of the dependency (used in logs)
+ *  - dependency.js       | {array|string[]|function[]|null|undefined} (Optional) Array of URLs to javascript files
+ *  - dependency.css      | {array|string[]|function[]|null|undefined} (Optional) Array of URLs to CSS files
+ *  - dependency.isLoaded | {function|null|undefined} (Optional) A function to check if the dependency has loaded (for use outside the Dependency Manager)
+ *  - dependency.loaded   | {boolean|null|undefined} (Automatic) Has this dependency been loaded yet?
+ *
+ * Note: 'dependency.loaded' is handled automatically. Please don't touch it.
+ */
+const DependencyManager = {
+    dependencies: {
+        toastify: {
+            name: 'Toastify.js',
+            js: [
+                'https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.js',
+            ],
+            css: [
+                'https://cdn.jsdelivr.net/npm/toastify-js@1.12.0/src/toastify.min.css',
+            ],
+            isLoaded: () => typeof WindowInteraction.getToastify() === 'function',
+        },
+        modifiedGameScript: {
+            name: 'Modified game script',
+            js: [
+                () => Core.settings.modifiedGameScript.get(), // Function -- Will be resolved when loaded.
+            ],
+            isLoaded: () => typeof WindowInteraction.getExposedI() === 'object',
+        },
+    },
 
     /**
-     * Attempt to put focus on the game's canvas
+     * Custom logger for dependencies
+     *
+     * @param {object} dependency
+     * @param  {...any} args
      */
-    putFocusOnGameCanvas() {
-        this.getGameCanvasElement()?.focus()
+    log(dependency, ...args) {
+        Core.log(`[Dependency: ${dependency.name}]`, ...args)
+    },
+
+    internal: {
+        /**
+         * Resolve url
+         *
+         * A url can either be a string or a function.
+         * If the url is a function, the function will be resolved and the output returned (as long as it is a string).
+         *
+         * @param {string|function|null|undefined} url
+         * @returns {string|null}
+         */
+        resolveUrl(url) {
+            // Set output to whatever the url is
+            let output = url
+
+            // Check if the url is a function and resolve it
+            if (typeof url === 'function') {
+                output = url()
+            }
+
+            // Return the output if it is a string
+            return typeof output === 'string'
+                ? output
+                : null
+        },
+    },
+
+    /**
+     * Load a dependency
+     *
+     * Appends necessary <script> and <link> elements to <head>.
+     * When a dependency has loaded it will not load again.
+     *
+     * @param {object} dependency
+     */
+    loadDependency(dependency) {
+        if (typeof dependency !== 'object') {
+            throw Error('Dependency must be an object.')
+        }
+
+        // Checking state
+        if (dependency.loaded === true) {
+            this.log(dependency, 'Already loaded. Ignoring.')
+            return
+        }
+
+        this.log(dependency, 'Loading dependency...', { dependency: dependency })
+
+        // Append javascript URLs
+        if (Array.isArray(dependency.js) && dependency.js.length) {
+            for (let i = 0; i < dependency.js.length; i++) {
+                // Resolve url
+                const url = this.internal.resolveUrl(dependency.js[i])
+
+                // Append if the url was correctly resolved
+                if (url !== null) {
+                    DocumentInteraction.appendScript(url)
+                }
+            }
+        }
+
+        // Append CSS URLs
+        if (Array.isArray(dependency.css) && dependency.css.length) {
+            for (let i = 0; i < dependency.css.length; i++) {
+                // Resolve url
+                const url = this.internal.resolveUrl(dependency.css[i])
+
+                // Append if the url was correctly resolved
+                if (url !== null) {
+                    DocumentInteraction.appendStyle(url)
+                }
+            }
+        }
+
+        // Saving state
+        dependency.loaded = true
+    },
+
+    /**
+     * Load dependencies
+     *
+     * @param {array|object[]|null} dependencies Custom dependencies. Use 'null' to use configured dependencies.
+     */
+    load(dependencies = null) {
+        // -- Attempt to use dependencies from parameter
+
+        // Check if we can use dependecies from parameter
+        if (Array.isArray(dependencies) && length) {
+            // Load dependencies (from an array)
+            for (let i = 0; i < dependencies.length; i++) {
+                const dependency = dependencies[i]
+                this.loadDependency(dependency)
+            }
+            return // -- Important
+        }
+
+        // -- Fallback to configured dependencies
+
+        // Make sure dependencies are stored in an object
+        if (typeof this.dependencies !== 'object') {
+            throw Error('Expected \'this.dependencies\' to be an object.')
+        }
+
+        // Load dependencies
+        for (const key in this.dependencies) {
+            if (Object.hasOwnProperty.call(this.dependencies, key)) {
+                const dependency = this.dependencies[key]
+                this.loadDependency(dependency)
+            }
+        }
     },
 }
 
@@ -154,6 +317,7 @@ const Toastmaker = {
         error: {
             background: 'linear-gradient(to right bottom, rgb(162, 51, 56), rgb(130, 6, 12))',
             cursor: 'initial',
+            maxWidth: '800px',
         },
     },
 
@@ -306,7 +470,7 @@ const ConditionChecker = {
     conditions: [
         {
             name: 'Toastify.js',
-            passes: () => typeof WindowInteraction.getToastify() === 'function',
+            passes: () => DependencyManager.dependencies.toastify.isLoaded(),
             beforeCheck: {
                 message: 'Waiting for Toastify.js to finish loading...',
                 messageOnce: true,
@@ -321,8 +485,41 @@ const ConditionChecker = {
             },
         },
         {
+            name: 'Modified game script',
+            passes: () => DependencyManager.dependencies.modifiedGameScript.isLoaded(),
+            beforeCheck: {
+                message: `We have to make sure the modified game script has loaded. A modified script with the identifier '${() => Core.settings.modifiedGameScript.identifier}' might not exist in our repo yet.`,
+                messageOnce: true,
+            },
+            onPass: {
+                message: 'Modified game script has successfully loaded.',
+                messageOnce: true,
+            },
+            onFail: {
+                message: 'Unable to detect the modified game script. A slow connection can also cause this issue. Triggering failsafe...',
+                messageOnce: true,
+                run: () => {
+                    const prefix = '[FAILSAFE]'
+                    Core.log(prefix, 'Sorry, the modified game script didn\'t load. Reverting back to the original game script.')
+                    Toastmaker.makeToast(
+                        `<b><a style="color: #9bb5ff" href="https://github.com/Opinion/slowroads-handling-editor">Opinion's Handling Editor</a></b></br>
+Unable to load modified game script. Game script identifier: '${Core.settings.modifiedGameScript.identifier}'. Please create an issue if one hasn't been
+made yet. Remember to include any logs from your browsers console. Thanks. ~Opinion<br><br>
+Likely reason for this error: slowroads.io has updated their game scripts and we have yet to include the new version in our repository.<br><br>
+As a failsafe, we loaded the original game script so you can enjoy the unmodded game.`,
+                        'error',
+                        240000,
+                    )
+                    DocumentInteraction.appendScript(Core.settings.originalGameScript + '?ignore')
+                    Core.log(prefix, 'Throwing an exception to stop the Handling Editor. Please check the repo to see if a matching script actually exists.')
+                    throw Error('Modified game script didn\'t load. Failsafe triggered and loaded the original game script.')
+                },
+                runOnce: true,
+            },
+        },
+        {
             name: 'Game version',
-            passes: () => DocumentInteraction.getGameVersion() === Core.settings.supportedVersion,
+            passes: () => WindowInteraction.getExposedVersion() === Core.settings.supportedVersion,
             beforeCheck: {
                 message: `Required game version: '${Core.settings.supportedVersion}'.`,
                 messageOnce: true,
@@ -332,9 +529,9 @@ const ConditionChecker = {
                 messageOnce: true,
             },
             onFail: {
-                message: `Game version '${DocumentInteraction.getGameVersion()}' is not supported. Please check if the handling editor has a new release available.`,
+                message: `Game version '${WindowInteraction.getExposedVersion()}' is not supported. Please check if the Handling Editor has a new release available.`,
                 messageOnce: true,
-                run: () => Toastmaker.makeToast('<b><a style="color: #9bb5ff" href="https://github.com/Opinion/slowroads-handling-editor">Opinion\'s Handling Editor</a></b></br>Game version is not supported. Please check if the handling editor has a new release available.', 'error', 100000),
+                run: () => Toastmaker.makeToast('<b><a style="color: #9bb5ff" href="https://github.com/Opinion/slowroads-handling-editor">Opinion\'s Handling Editor</a></b></br>Game version is not supported. Please check if the Handling Editor has a new release available.', 'error', 100000),
                 runOnce: true,
                 throwException: true,
             },
@@ -528,7 +725,6 @@ const HandlingEditor = {
     appendStyle: DocumentInteraction.appendStyle,
     appendRawScript: DocumentInteraction.appendRawScript,
     getGameCanvasElement: DocumentInteraction.getGameCanvasElement,
-    putFocusOnGameCanvas: DocumentInteraction.putFocusOnGameCanvas,
 
     /* Include 'Toastmaker' */
     toastmaker: Toastmaker,
@@ -558,15 +754,11 @@ const HandlingEditor = {
     initialize() {
         this.log('Initializing...')
 
-        // Append modifified game script
-        this.appendScript(this.settings.modifiedGameScript)
+        // Load dependencies
+        DependencyManager.load()
 
-        // Append Toastify.js : https://apvarun.github.io/toastify-js
-        this.appendScript('https://cdn.jsdelivr.net/npm/toastify-js')
-        this.appendStyle('https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css')
-
-        // Waiting until dependencies have loaded and the game has started
-        this.log('Before we start the handling editor we need to wait for some conditions...')
+        // Run ConditionChecker until we can start the Handling Editor
+        this.log('Before we start the Handling Editor, we need to wait for some conditions...')
         const self = this
         this.settings.pleaseWait = setInterval(() => {
             // Checking conditions
@@ -855,11 +1047,44 @@ const HandlingEditor = {
             self.resetHandling()
         })
     },
+
+    /**
+     * Attempt to put focus on the game's canvas
+     */
+    putFocusOnGameCanvas() {
+        function focus() {
+            DocumentInteraction.getGameCanvasElement()?.focus()
+        }
+
+        // Get active element
+        const activeElement = document.activeElement
+
+        if (activeElement?.tagName === 'INPUT') {
+            // -- Active element is an input
+
+            // Only focus if the active element is the same element that was recently updated.
+            // This allows you to click on another input (triggers 'change' event) without giving focus to the game.
+            // We assume; if you click another input, you want to keep editing and not play right away.
+            if (activeElement === this.recentlyUpdatedInputElement) {
+                focus()
+            }
+        } else {
+            // -- Active element is anything else
+
+            // Always focus
+            focus()
+        }
+
+        // Resetting
+        this.recentlyUpdatedInputElement = null
+    },
+
     updateHandling(handlingKey, value) {
         const handlingMetrics = WindowInteraction.getExposedI().current.vehicleController.vehicleDef.metrics
         handlingMetrics[handlingKey] = parseFloat(value)
         this.putFocusOnGameCanvas()
     },
+
     resetHandling() {
         if (typeof this.settings.defaultHandling === 'undefined') {
             this.toastmaker.makeToast('Can\'t reset handling. Default values have not been intialized yet.')
@@ -877,6 +1102,7 @@ const HandlingEditor = {
         this.loadHandling(false)
         this.putFocusOnGameCanvas()
     },
+
     loadHandling(firstRun = false) {
         if (firstRun) {
             this.settings.defaultHandling = {}
@@ -899,6 +1125,7 @@ const HandlingEditor = {
                 // Creating event listener
                 const self = this
                 inputElement.addEventListener('change', () => {
+                    self.recentlyUpdatedInputElement = inputElement
                     self.updateHandling(handlingKey, inputElement.value)
 
                     // Display saved text in UI
@@ -909,6 +1136,7 @@ const HandlingEditor = {
             }
         }
     },
+
     dragElement(element) {
         let pos1 = 0; let pos2 = 0; let pos3 = 0; let pos4 = 0
         const headerElement = document.getElementById(element.id + '-header')
@@ -962,11 +1190,41 @@ const HandlingEditor = {
 
 (function() {
     'use strict'
-    addEventListener('beforescriptexecute', (e) => {
-        if (e.target.src === HandlingEditor.settings.originalGameScript) {
-            HandlingEditor.log('Detected game script, we will try to prevent execution...', e)
-            e.preventDefault()
-            HandlingEditor.initialize()
+    addEventListener('beforescriptexecute', (event) => {
+        const url = event.target.src
+
+        // If the URL ends with '?ignore' we know we know the failsafe has triggered.
+        // We want to return as to let the original game script run like normal.
+        if (url.endsWith('?ignore')) {
+            return
         }
+
+        // Check if URL matches pattern of the original game script
+        const matches = Core.settings.originalGameScriptPattern.exec(url)
+
+        // Skipping non-matching scripts
+        if (matches === null || !Array.isArray(matches) || matches.length !== 2) {
+            return
+        }
+
+        // Getting and storing original game script
+        // This will be used in the failsafe built in to the ConditionChecker. If the modified game script doesn't
+        // load it will revert back to the original game script instead. You won't get to use the Handling Editor
+        // but at least you can play the game.
+        const originalGameScript = matches[0]
+        Core.settings.originalGameScript = originalGameScript
+
+        // Getting and storing identifier
+        // This identifier will be used when we load a modified game script in the repo's '/dist' directory.
+        // By doing this we can essentially update the repo without mod users needing to update their userscript.
+        const identifier = matches[1]
+        Core.settings.modifiedGameScript.identifier = identifier
+        Core.log('Detected original game script. The identifer:', identifier, 'will be used to load a modified game script from our repo.', { event: event, element: event.target, url: url })
+
+        // Preventing execution of the original game script
+        event.preventDefault()
+        Core.log('Prevented execution of the original game script.')
+
+        HandlingEditor.initialize()
     })
 })()
