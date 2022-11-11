@@ -1125,13 +1125,15 @@ const HandlingEditor = {
                 // Creating event listener
                 const self = this
                 inputElement.addEventListener('change', () => {
-                    self.recentlyUpdatedInputElement = inputElement
-                    self.updateHandling(handlingKey, inputElement.value)
+                    setTimeout(() => {
+                        self.recentlyUpdatedInputElement = inputElement
+                        self.updateHandling(handlingKey, inputElement.value)
 
-                    // Display saved text in UI
-                    const savedElement = inputElement.parentElement.children[2]
-                    savedElement?.classList?.add('active')
-                    setTimeout(() => { savedElement?.classList?.remove('active') }, 2500)
+                        // Display saved text in UI
+                        const savedElement = inputElement.parentElement.children[2]
+                        savedElement?.classList?.add('active')
+                        setTimeout(() => { savedElement?.classList?.remove('active') }, 2500)
+                    }, 100)
                 })
             }
         }
