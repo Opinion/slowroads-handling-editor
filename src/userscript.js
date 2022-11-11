@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Opinion's Handling Editor for slowroads.io
 // @namespace    https://github.com/Opinion/slowroads-handling-editor
-// @version      1.3
+// @version      1.4.pre-release
 // @description  This mod adds a handling editor for slowroads.io. Supports game version v1.0.2.
 // @author       Opinion
 // @match        https://slowroads.io/
