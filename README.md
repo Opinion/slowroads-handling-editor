@@ -2,9 +2,9 @@
 ![Opinion's Handling Editor for slowroads.io](/resources/img/header.png)
 Opinion's Handling Editor is a mod for slowroads.io which gives you access to a simple handling editor. Get more out of your vehicle by customizing it on the fly.
 
-## Status
- Supports game version 1.0.2 
- Firefox is currently required.
+# --- Project abandoned by request from the SlowRoads creator ---
+> I wish you good luck with your game!  
+> - Opinion
 
 ## How it works
  - You install a *userscript* in Violentmonkey or Greasemonkey (similar extensions not tested).
